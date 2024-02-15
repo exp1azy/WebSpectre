@@ -1,6 +1,6 @@
-﻿namespace WebSpectre.Shared.Packets
+﻿namespace WebSpectre.Shared.ES
 {
-    public class IPv4 : BasePacket
+    public class IPv4Document : BasePacketDocument
     {
         public string DestinationAddress { get; set; }
 

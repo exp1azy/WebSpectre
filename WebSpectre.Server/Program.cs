@@ -2,6 +2,8 @@ using WebSpectre.Server.Hubs;
 using WebSpectre.Server.Hubs.Interfaces;
 using WebSpectre.Server.Repositories;
 using WebSpectre.Server.Repositories.Interfaces;
+using WebSpectre.Server.Services;
+using WebSpectre.Server.Services.Interfaces;
 using WebSpectre.Server.Startup;
 
 namespace WebSpectre.Server
@@ -23,6 +25,8 @@ namespace WebSpectre.Server
 
             builder.Services.AddScoped<INetworkHub, NetworkHub>();
             builder.Services.AddTransient<IRedisRepository, RedisRepository>();
+            builder.Services.AddTransient<IMonitoringService, MonitoringService>();
+            builder.Services.AddTransient<PerfomanceCalculator>();
 
             var app = builder.Build();
 
@@ -38,7 +42,7 @@ namespace WebSpectre.Server
 
             app.MapControllers();
 
-            app.MapHub<NetworkHub>("/networkHub");
+            app.MapHub<NetworkHub>("/networkhub");
 
             app.Run();
         }

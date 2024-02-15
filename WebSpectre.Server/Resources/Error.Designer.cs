@@ -106,6 +106,15 @@ namespace WebSpectre.Server.Resources {
         }
         
         /// <summary>
+        ///   Ищет локализованную строку, похожую на Агенты не найдены. Проверьте работу службы на конечных устройствах.
+        /// </summary>
+        public static string NoAgentsWereFound {
+            get {
+                return ResourceManager.GetString("NoAgentsWereFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Ищет локализованную строку, похожую на Не удалось установить соединение с ElasticSearch.
         /// </summary>
         public static string NoConnectionToElastic {

@@ -1,4 +1,4 @@
-﻿namespace WebSpectre.Shared
+﻿namespace WebSpectre.Shared.ES
 {
     public class StatisticsDocument
     {

@@ -1,6 +1,6 @@
-﻿namespace WebSpectre.Shared.Packets
+﻿namespace WebSpectre.Shared.ES
 {
-    public class IgmpV2 : BasePacket
+    public class IgmpV2Document : BasePacketDocument
     {
         public string Type { get; set; }
 

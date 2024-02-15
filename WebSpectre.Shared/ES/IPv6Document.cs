@@ -1,8 +1,8 @@
 ﻿using System.Text;
 
-namespace WebSpectre.Shared.Packets
+namespace WebSpectre.Shared.ES
 {
-    public class IPv6 : BasePacket
+    public class IPv6Document : BasePacketDocument
     {
         public string DestinationAddress { get; set; }
 

@@ -1,6 +1,6 @@
-﻿namespace WebSpectre.Shared.Packets
+﻿namespace WebSpectre.Shared.ES
 {
-    public class Udp : BasePacket
+    public class UdpDocument : BasePacketDocument
     {
         public ushort Checksum { get; set; }
 

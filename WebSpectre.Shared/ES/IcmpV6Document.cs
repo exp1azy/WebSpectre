@@ -1,6 +1,6 @@
-﻿namespace WebSpectre.Shared.Packets
+﻿namespace WebSpectre.Shared.ES
 {
-    public class IcmpV6 : BasePacket
+    public class IcmpV6Document : BasePacketDocument
     {
         public ushort Checksum { get; set; }
 

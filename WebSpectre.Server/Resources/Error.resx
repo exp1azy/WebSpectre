@@ -132,6 +132,9 @@
   <data name="FailedToReadStreamReadDelay" xml:space="preserve">
     <value>Не удалось прочитать StreamReadDelay из файла конфигурации appsettings.json</value>
   </data>
+  <data name="NoAgentsWereFound" xml:space="preserve">
+    <value>Агенты не найдены. Проверьте работу службы на конечных устройствах</value>
+  </data>
   <data name="NoConnectionToElastic" xml:space="preserve">
     <value>Не удалось установить соединение с ElasticSearch</value>
   </data>

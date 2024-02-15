@@ -1,8 +1,8 @@
 ﻿using System.Text;
 
-namespace WebSpectre.Shared.Packets
+namespace WebSpectre.Shared.ES
 {
-    public class Tcp : BasePacket
+    public class TcpDocument : BasePacketDocument
     {
         public bool Acknowledgment { get; set; }
 
@@ -24,11 +24,11 @@ namespace WebSpectre.Shared.Packets
 
         public bool NonceSum { get; set; }
 
-        public string Options { get; set; }
+        public byte[] Options { get; set; }
 
         public List<TcpOption>? OptionsCollection { get; set; }
 
-        public string OptionsSegment { get; set; }
+        public byte[] OptionsSegment { get; set; }
 
         public bool Push { get; set; }
 

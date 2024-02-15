@@ -1,32 +1,133 @@
-﻿using PacketDataIndexer;
-using PacketDotNet;
+﻿using PacketDotNet;
 using StackExchange.Redis;
+using WebSpectre.Server.Entities;
 using WebSpectre.Server.Exceptions;
 using WebSpectre.Server.Hubs.Interfaces;
 using WebSpectre.Server.Repositories.Interfaces;
-using WebSpectre.Server.Resources;
 using WebSpectre.Server.Services.Interfaces;
+using WebSpectre.Shared.Services;
+using Error = WebSpectre.Server.Resources.Error;
 
 namespace WebSpectre.Server.Services
 {
     public class MonitoringService : IMonitoringService
     {
+        private readonly PerfomanceCalculator _perfomanceCalc;
         private readonly IRedisRepository _redisRepository;
         private readonly INetworkHub _hubContext;
         private readonly IConfiguration _config;
 
-        public MonitoringService(IRedisRepository redisRepository, INetworkHub hubContext, IConfiguration config)
+        public MonitoringService(
+            PerfomanceCalculator perfomanceCalc, 
+            IRedisRepository redisRepository, 
+            INetworkHub hubContext, 
+            IConfiguration config)
         {
+            _perfomanceCalc = perfomanceCalc;
             _redisRepository = redisRepository;
             _hubContext = hubContext;
             _config = config;
         }
 
-        public async Task ReadStreamAsync(string agent, int count, CancellationToken cancellationToken)
+        public async Task<IEnumerable<RedisKey>> GetAgentsAsync(CancellationToken cancellationToken)
         {
-            if (!int.TryParse(_config["StreamReadDelay"], out int streamReadDelay))          
-                throw new ArgumentNullException(Error.FailedToReadStreamReadDelay);
-            
+            IEnumerable<RedisKey> keys;
+
+            try
+            {
+               return GetAgents();
+            }
+            catch (ReadingConfigurationException)
+            {
+                throw;
+            }
+            catch (NoAgentsException)
+            {
+                throw;
+            }
+        }
+
+        public async Task SendNetworkFromStreamAsync(string agent, int count, CancellationToken cancellationToken)
+        {
+            if (!int.TryParse(_config["StreamReadDelay"], out int streamReadDelay))
+                throw new ReadingConfigurationException(Error.FailedToReadStreamReadDelay);
+
+            try
+            {
+                await GetAndSendNetworkAsync(agent, count, streamReadDelay, cancellationToken);
+            }
+            catch (WebSpectreRedisConnectionException)
+            {
+                throw;
+            }
+            catch (ApplicationException)
+            {
+                throw;
+            }
+        }
+
+        public async Task SendNetworkFromStreamAsync(int count, CancellationToken cancellationToken)
+        {
+            if (!int.TryParse(_config["StreamReadDelay"], out int streamReadDelay))
+                throw new ReadingConfigurationException(Error.FailedToReadStreamReadDelay);
+
+            IEnumerable<RedisKey> keys;
+
+            try
+            {
+                keys = GetAgents();
+            }
+            catch (ReadingConfigurationException)
+            {
+                throw;
+            }
+            catch (NoAgentsException)
+            {
+                throw;
+            }
+
+            var tasks = new List<Task>();
+
+            foreach (var key in keys)
+            {
+                tasks.Add(Task.Run(async () =>
+                {
+                    try
+                    {
+                        await GetAndSendNetworkAsync(key, count, streamReadDelay, cancellationToken);
+                    }
+                    catch (WebSpectreRedisConnectionException)
+                    {
+                        throw;
+                    }
+                    catch (ApplicationException)
+                    {
+                        throw;
+                    }
+                }));
+            }
+
+            await Task.WhenAll(tasks);
+        }
+
+        private IEnumerable<RedisKey> GetAgents()
+        {
+            string? host = _config.GetConnectionString("RedisConnection");
+            if (string.IsNullOrEmpty(host))
+                throw new ReadingConfigurationException(Error.FailedToReadRedisConnectionString);
+
+            if (!int.TryParse(_config["RedisPort"], out var port))
+                throw new ReadingConfigurationException(Error.FailedToReadRedisPort);
+
+            var keys = _redisRepository.GetRedisKeys(host, port);
+            if (!keys.Any())
+                throw new NoAgentsException(Error.NoAgentsWereFound);
+
+            return keys;
+        }
+
+        private async Task GetAndSendNetworkAsync(RedisKey agent, int count, int streamReadDelay, CancellationToken cancellationToken)
+        {
             var offset = StreamPosition.Beginning;
             while (true)
             {
@@ -40,25 +141,58 @@ namespace WebSpectre.Server.Services
                         entries = await _redisRepository.ReadStreamAsync(agent, offset, count);
                     }
 
-                    var rawPackets = PacketGenerator.GetDeserializedRawPackets(entries);
-                    foreach (var rp in rawPackets)
+                    Throughput? throughput = null;
+                    ulong? delay = null;
+                    Jitter? jitter = null;
+
+                    var pTask = Task.Run(async () =>
                     {
-                        var packet = Packet.ParsePacket((LinkLayers)rp!.LinkLayerType, rp.Data);
+                        var rawPackets = Deserializer.GetDeserializedRawPackets(entries);
+                        foreach (var rp in rawPackets)
+                        {
+                            var packet = Packet.ParsePacket((LinkLayers)rp!.LinkLayerType, rp.Data);
 
-                        var transport = PacketGenerator.GenerateTransportPacket(packet);
-                        var network = PacketGenerator.GenerateNetworkPacket(packet);
+                            if (throughput != null)
+                            {
+                                delay = _perfomanceCalc.GetTransmissionDelay(throughput.Bps, packet);
+                                await _hubContext.SendCurrentDelayAsync((ulong)delay, cancellationToken);
+                            }
 
-                        if (transport != null)
-                            await _hubContext.SendPacketAsync(transport, cancellationToken);
-                        if (network != null)
-                            await _hubContext.SendPacketAsync(network, cancellationToken);
-                    }
+                            var transport = PacketExtractor.ExtractTransport(packet);
+                            var internet = PacketExtractor.ExtractInternet(packet);
 
-                    var statistics = PacketGenerator.GetDeserializedStatistics(entries);
-                    foreach (var s in statistics)
+                            if (_perfomanceCalc.Jitter == null)
+                            {
+                                if (internet is IPv4Packet)
+                                {
+                                    await _perfomanceCalc.FindJitterAsync((IPv4Packet)internet);
+                                }                                 
+                            }
+                            else
+                            {
+                                jitter = _perfomanceCalc.Jitter;
+                                await _hubContext.SendCurrentJitterAsync(jitter, cancellationToken);
+                            }
+
+                            if (transport != null)
+                                await _hubContext.SendPacketAsync((Packet)transport, cancellationToken);
+                            if (internet != null)
+                                await _hubContext.SendPacketAsync((Packet)internet, cancellationToken);
+                        }
+                    });
+
+                    var sTask = Task.Run(async () =>
                     {
-                        await _hubContext.SendStatisticsAsync(s, cancellationToken);
-                    }
+                        var statistics = Deserializer.GetDeserializedStatistics(entries);
+                        foreach (var s in statistics)
+                        {
+                            throughput = _perfomanceCalc.GetThroughput(s);
+                            await _hubContext.SendStatisticsAsync(s, cancellationToken);
+                            await _hubContext.SendCurrentThroughputAsync(throughput, cancellationToken);
+                        }
+                    });
+
+                    await Task.WhenAll(pTask, sTask);
 
                     offset = entries.Last().Id;
                 }
@@ -72,10 +206,5 @@ namespace WebSpectre.Server.Services
                 }
             }
         }
-
-        public async Task ReadStreamAsync(int count, CancellationToken cancellationToken)
-        {
-            
-        }
     }
-}
+} 

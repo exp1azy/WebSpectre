@@ -1,4 +1,6 @@
-﻿namespace WebSpectre.Server.Services.Interfaces
+﻿using StackExchange.Redis;
+
+namespace WebSpectre.Server.Services.Interfaces
 {
     public interface IMonitoringService
     {
@@ -7,13 +9,20 @@
         /// </summary>
         /// <param name="cancellationToken">Токен отмены.</param>
         /// <returns></returns>
-        public Task ReadStreamAsync(string agent, int count, CancellationToken cancellationToken);
+        public Task SendNetworkFromStreamAsync(string agent, int count, CancellationToken cancellationToken);
 
         /// <summary>
         /// Чтение потоков Redis.
         /// </summary>
         /// <param name="cancellationToken">Токен отмены.</param>
         /// <returns></returns>
-        public Task ReadStreamAsync(int count, CancellationToken cancellationToken);
+        public Task SendNetworkFromStreamAsync(int count, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Получить агентов.
+        /// </summary>
+        /// <param name="cancellationToken">Токен отмены.</param>
+        /// <returns></returns>
+        public Task<IEnumerable<RedisKey>> GetAgentsAsync(CancellationToken cancellationToken);
     }
 }
