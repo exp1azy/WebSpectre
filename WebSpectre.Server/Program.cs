@@ -1,3 +1,4 @@
+using WebSpectre.Client.Data;
 using WebSpectre.Server.Hubs;
 using WebSpectre.Server.Hubs.Interfaces;
 using WebSpectre.Server.Repositories;
@@ -22,6 +23,8 @@ namespace WebSpectre.Server
             builder.AddRedis();
 
             builder.Services.AddSignalR();
+
+            builder.Services.AddDbContext<DataContext>();
 
             builder.Services.AddScoped<INetworkHub, NetworkHub>();
             builder.Services.AddTransient<IRedisRepository, RedisRepository>();

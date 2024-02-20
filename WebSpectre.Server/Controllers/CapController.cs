@@ -5,12 +5,12 @@ using WebSpectre.Server.Services.Interfaces;
 namespace WebSpectre.Server.Controllers
 {
     [ApiController]
-    [Route("api.webspectre")]
-    public class ApiController : Controller
+    [Route("api.webspectre/cap")]
+    public class CapController : Controller
     {
         private readonly IMonitoringService _monitoringService;
 
-        public ApiController(IMonitoringService monitoringService)
+        public CapController(IMonitoringService monitoringService)
         {
             _monitoringService = monitoringService;
         }

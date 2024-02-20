@@ -1,16 +1,23 @@
 ﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+<header class="ws-header">
+    <div class="ws-title">WebSpectre</div>
+    <div class="ws-objects">
+        <div class="ws-header-titles">
+            <a class="ws-header-title" href="#" target="blank">МОНИТОРИНГ</a>
+            <a class="ws-header-title" href="#" target="blank">АНАЛИЗ</a>
         </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+        <div class="ws-header-authorize">
+            <span class="ws-username">Admin41</span>
+            <div class="ws-icon-wrapper">
+                <a class="ws-authorize"><img src="icons/user.png" alt="login" class="header-icon"></a>
+            </div>
+            <div class="ws-icon-wrapper">
+                <a class="ws-unauthorize"><img src="icons/logout.png" alt="logout" class="header-icon"></a>
+            </div>
+        </div>
+    </div>
+</header>
+<main class="ws-main">
+    @Body
+</main>

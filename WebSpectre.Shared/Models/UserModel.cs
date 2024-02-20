@@ -1,4 +1,4 @@
-﻿namespace WebSpectre.Server.Models
+﻿namespace WebSpectre.Shared.Models
 {
     public class UserModel
     {
