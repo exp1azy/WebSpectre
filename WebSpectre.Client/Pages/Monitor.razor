@@ -1,34 +1,66 @@
-﻿@page "/monitor"
+﻿@using WebSpectre.Client.Monitor;
+
+@page "/"
 
 <PageTitle>Мониторинг</PageTitle>
 
-<div class="ws-agents">
-    <div class="ws-agent">
-        <img src="icons/desktop.png" alt="agent" class="main-icon">
-        <span class="ws-agent-hostname">HOST1</span>
-        <button class="ws-agent-button">Информация</button>
-        <button class="ws-agent-button">Сетевые адаптеры</button>
+<main class="ws-main">
+    <div class="ws-agents">
+        @foreach (var agent in agents)
+        {
+            <div class="ws-agent">
+                <img src="icons/desktop.png" alt="agent" class="main-icon">
+                <span class="ws-agent-hostname">HOST1</span>
+                <button class="ws-agent-button" @onclick="() => ShowHostInfoModal(host)">Информация</button>
+                <button class="ws-agent-button">Сетевые адаптеры</button>
+            </div>
+        }
     </div>
-    <div class="ws-agent">
-        <img src="icons/desktop.png" alt="agent" class="main-icon">
-        <span class="ws-agent-hostname">HOST2</span>
-        <button class="ws-agent-button">Информация</button>
-        <button class="ws-agent-button">Сетевые адаптеры</button>
-    </div>
-    <div class="ws-agent">
-        <img src="icons/desktop.png" alt="agent" class="main-icon">
-        <span class="ws-agent-hostname">HOST3</span>
-        <button class="ws-agent-button">Информация</button>
-        <button class="ws-agent-button">Сетевые адаптеры</button>
-    </div>
-    <div class="ws-agent">
-        <img src="icons/desktop.png" alt="agent" class="main-icon">
-        <span class="ws-agent-hostname">HOST4</span>
-        <button class="ws-agent-button">Информация</button>
-        <button class="ws-agent-button">Сетевые адаптеры</button>
-    </div>
-</div>
+</main>
+
+<HostInfoModal @ref="hostInfoModal" />
 
 @code {
+    private List<HostInfo> hosts = new List<HostInfo>();
 
+    private List<string> agents = new List<string>();
+
+    private HostInfoModal hostInfoModal;
+
+    private void ShowHostInfoModal(HostInfo host)
+    {
+        hostInfoModal.Show(host); 
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using (var httpClient = new HttpClient())
+        {
+            var existAgents = await httpClient.GetFromJsonAsync<List<string>>("https://localhost:7042/api.webspectre/cap/agents");
+            if (existAgents != null)
+                agents = existAgents;
+        }
+    }
+
+    private async Task GetHostsAsync()
+    {
+        if (agents != null)
+        {
+            foreach (var agent in agents)
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    HostInfo? hostInfo;
+
+                    if (agent == Environment.MachineName)                   
+                        hostInfo = await httpClient.GetFromJsonAsync<HostInfo>("https://localhost/info");                    
+                    else                    
+                        hostInfo = await httpClient.GetFromJsonAsync<HostInfo>($"https://{agent}/info");                   
+
+                    if (hostInfo != null)
+                        hosts.Add(hostInfo);
+                }
+            }
+        }
+    }
 }

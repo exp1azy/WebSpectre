@@ -1,4 +1,4 @@
-﻿namespace WebSpectre.Shared.Capture
+﻿namespace WebSpectre.Shared.Agents
 {
     public class PcapAddress
     {

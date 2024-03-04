@@ -1,8 +1,9 @@
-﻿using PacketDotNet;
+﻿using Microsoft.AspNetCore.SignalR;
+using PacketDotNet;
 using StackExchange.Redis;
 using WebSpectre.Server.Entities;
 using WebSpectre.Server.Exceptions;
-using WebSpectre.Server.Hubs.Interfaces;
+using WebSpectre.Server.Hubs;
 using WebSpectre.Server.Repositories.Interfaces;
 using WebSpectre.Server.Services.Interfaces;
 using WebSpectre.Shared.Services;
@@ -14,13 +15,13 @@ namespace WebSpectre.Server.Services
     {
         private readonly PerfomanceCalculator _perfomanceCalc;
         private readonly IRedisRepository _redisRepository;
-        private readonly INetworkHub _hubContext;
+        private readonly IHubContext<NetworkHub> _hubContext;
         private readonly IConfiguration _config;
 
         public MonitoringService(
             PerfomanceCalculator perfomanceCalc, 
             IRedisRepository redisRepository, 
-            INetworkHub hubContext, 
+            IHubContext<NetworkHub> hubContext, 
             IConfiguration config)
         {
             _perfomanceCalc = perfomanceCalc;
@@ -29,13 +30,13 @@ namespace WebSpectre.Server.Services
             _config = config;
         }
 
-        public async Task<IEnumerable<RedisKey>> GetAgentsAsync(CancellationToken cancellationToken)
+        public async Task<List<string>> GetAgentsAsync(CancellationToken cancellationToken)
         {
-            IEnumerable<RedisKey> keys;
-
             try
             {
-               return GetAgents();
+                var keys = GetAgents().Select(a => a.ToString()).ToList();
+
+               return keys;
             }
             catch (ReadingConfigurationException)
             {
@@ -136,7 +137,7 @@ namespace WebSpectre.Server.Services
                     var entries = await _redisRepository.ReadStreamAsync(agent, offset, count);
                     while (entries.Length == 0)
                     {
-                        await _hubContext.SendMessageAsync($"Поток по ключу {agent} пуст, ожидаются новые данные...", cancellationToken);
+                        await _hubContext.Clients.All.SendAsync("ReceiveMessage", $"Поток по ключу {agent} пуст, ожидаются новые данные...", cancellationToken);
                         await Task.Delay(TimeSpan.FromSeconds(streamReadDelay));
                         entries = await _redisRepository.ReadStreamAsync(agent, offset, count);
                     }
@@ -155,7 +156,7 @@ namespace WebSpectre.Server.Services
                             if (throughput != null)
                             {
                                 delay = _perfomanceCalc.GetTransmissionDelay(throughput.Bps, packet);
-                                await _hubContext.SendCurrentDelayAsync((ulong)delay, cancellationToken);
+                                await _hubContext.Clients.All.SendAsync("ReceiveDelay", delay, cancellationToken);
                             }
 
                             var transport = PacketExtractor.ExtractTransport(packet);
@@ -171,13 +172,13 @@ namespace WebSpectre.Server.Services
                             else
                             {
                                 jitter = _perfomanceCalc.Jitter;
-                                await _hubContext.SendCurrentJitterAsync(jitter, cancellationToken);
+                                await _hubContext.Clients.All.SendAsync("ReceiveJitter", jitter, cancellationToken);
                             }
 
                             if (transport != null)
-                                await _hubContext.SendPacketAsync((Packet)transport, cancellationToken);
+                                await _hubContext.Clients.All.SendAsync("ReceivePacket", (Packet)transport, cancellationToken);
                             if (internet != null)
-                                await _hubContext.SendPacketAsync((Packet)internet, cancellationToken);
+                                await _hubContext.Clients.All.SendAsync("ReceivePacket", (Packet)internet, cancellationToken); ;
                         }
                     });
 
@@ -187,8 +188,8 @@ namespace WebSpectre.Server.Services
                         foreach (var s in statistics)
                         {
                             throughput = _perfomanceCalc.GetThroughput(s);
-                            await _hubContext.SendStatisticsAsync(s, cancellationToken);
-                            await _hubContext.SendCurrentThroughputAsync(throughput, cancellationToken);
+                            await _hubContext.Clients.All.SendAsync("ReceiveStatistics", statistics, cancellationToken);
+                            await _hubContext.Clients.All.SendAsync("ReceiveThroughput", throughput, cancellationToken);
                         }
                     });
 

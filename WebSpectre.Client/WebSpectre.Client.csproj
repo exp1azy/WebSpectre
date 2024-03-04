@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\icons\" />
+    <ProjectReference Include="..\WebSpectre.Shared\WebSpectre.Shared.csproj" />
   </ItemGroup>
 
 </Project>

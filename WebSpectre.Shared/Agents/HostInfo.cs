@@ -1,6 +1,4 @@
-﻿using WebSpectre.Shared.Agents;
-
-namespace WebSpectre.Shared.Capture
+﻿namespace WebSpectre.Shared.Agents
 {
     public class HostInfo
     {
@@ -9,5 +7,9 @@ namespace WebSpectre.Shared.Capture
         public Hardware Hardware { get; set; }
 
         public string[] IPAddresses { get; set; }
+
+        public List<PcapDevice> AvailableDevices { get; set; }
+
+        public bool IsCaptureProcessing { get; set; }
     }
 }

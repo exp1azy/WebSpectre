@@ -23,6 +23,6 @@ namespace WebSpectre.Server.Services.Interfaces
         /// </summary>
         /// <param name="cancellationToken">Токен отмены.</param>
         /// <returns></returns>
-        public Task<IEnumerable<RedisKey>> GetAgentsAsync(CancellationToken cancellationToken);
+        public Task<List<string>> GetAgentsAsync(CancellationToken cancellationToken);
     }
 }
