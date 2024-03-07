@@ -1,28 +1,36 @@
-﻿using StackExchange.Redis;
-
-namespace WebSpectre.Server.Services.Interfaces
+﻿namespace WebSpectre.Server.Services.Interfaces
 {
     public interface IMonitoringService
     {
         /// <summary>
         /// Чтение указанного потока Redis.
         /// </summary>
-        /// <param name="cancellationToken">Токен отмены.</param>
         /// <returns></returns>
-        public Task SendNetworkFromStreamAsync(string agent, int count, CancellationToken cancellationToken);
+        public Task SendNetworkFromRequiredAgentAsync(string agent, int? count = null);
 
         /// <summary>
         /// Чтение потоков Redis.
         /// </summary>
-        /// <param name="cancellationToken">Токен отмены.</param>
         /// <returns></returns>
-        public Task SendNetworkFromStreamAsync(int count, CancellationToken cancellationToken);
+        public Task SendNetworkFromAllAgentsAsync(int? count = null);
+
+        /// <summary>
+        /// Остановить чтение потока указанного агента.
+        /// </summary>
+        /// <param name="agent">Агент.</param>
+        /// <returns></returns>
+        public Task StopRequiredAsync(string agent);
+
+        /// <summary>
+        /// Остановить чтение всех потоков.
+        /// </summary>
+        /// <returns></returns>
+        public Task StopAllAsync();
 
         /// <summary>
         /// Получить агентов.
         /// </summary>
-        /// <param name="cancellationToken">Токен отмены.</param>
         /// <returns></returns>
-        public Task<List<string>> GetAgentsAsync(CancellationToken cancellationToken);
+        public Task SendAgentsAsync();
     }
 }

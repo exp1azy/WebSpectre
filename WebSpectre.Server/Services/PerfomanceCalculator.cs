@@ -1,7 +1,7 @@
 ﻿using PacketDotNet;
 using System.Net.NetworkInformation;
-using WebSpectre.Server.Entities;
 using WebSpectre.Shared;
+using WebSpectre.Shared.Perfomance;
 
 namespace WebSpectre.Server.Services
 {

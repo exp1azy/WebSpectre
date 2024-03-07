@@ -1,4 +1,4 @@
-﻿namespace WebSpectre.Server.Entities
+﻿namespace WebSpectre.Shared.Perfomance
 {
     public class Jitter
     {

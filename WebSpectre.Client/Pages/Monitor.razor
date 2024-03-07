@@ -1,66 +1,164 @@
 ﻿@using WebSpectre.Client.Monitor;
 
+@inject HubConnection Hub
+@inject NavigationManager Navigation
+@inject HttpClient HttpClient
+
 @page "/"
 
 <PageTitle>Мониторинг</PageTitle>
 
 <main class="ws-main">
     <div class="ws-agents">
-        @foreach (var agent in agents)
+        @if (hosts != null)
         {
-            <div class="ws-agent">
-                <img src="icons/desktop.png" alt="agent" class="main-icon">
-                <span class="ws-agent-hostname">HOST1</span>
-                <button class="ws-agent-button" @onclick="() => ShowHostInfoModal(host)">Информация</button>
-                <button class="ws-agent-button">Сетевые адаптеры</button>
-            </div>
-        }
+            foreach (var host in hosts)
+            {
+                <div class="ws-agent">
+                    <img src="icons/desktop.png" alt="agent" class="main-icon">
+                    <span class="ws-agent-hostname">@host.Key</span>
+                    <button class="ws-agent-button">Информация</button>
+                    <button class="ws-agent-button">Сетевые адаптеры</button>
+                </div>
+            }
+        }      
     </div>
+
+    @if (error != null)
+    {
+        <div>@error</div>
+    }
 </main>
 
-<HostInfoModal @ref="hostInfoModal" />
-
 @code {
-    private List<HostInfo> hosts = new List<HostInfo>();
+    private string error;
 
     private List<string> agents = new List<string>();
+    private Dictionary<string, HostInfo> hosts = new Dictionary<string, HostInfo>();
 
-    private HostInfoModal hostInfoModal;
+    private HostInfoModal hostInfoModal = new HostInfoModal();
+    private AvailableDevicesModal availableDevicesModal = new AvailableDevicesModal();
 
     private void ShowHostInfoModal(HostInfo host)
     {
         hostInfoModal.Show(host); 
     }
 
-    protected override async Task OnInitializedAsync()
+    private void ShowNetworkAdapters(List<PcapDevice> devices)
     {
-        using (var httpClient = new HttpClient())
-        {
-            var existAgents = await httpClient.GetFromJsonAsync<List<string>>("https://localhost:7042/api.webspectre/cap/agents");
-            if (existAgents != null)
-                agents = existAgents;
-        }
+        availableDevicesModal.Show(devices);
     }
 
-    private async Task GetHostsAsync()
+    protected override async Task OnInitializedAsync()
+    {
+        ReceiveAll();
+
+        await Hub.StartAsync();
+
+        await GetAgents();       
+        await GetHosts();
+
+        StateHasChanged();
+    }
+
+    private async Task GetHosts()
     {
         if (agents != null)
         {
             foreach (var agent in agents)
             {
-                using (var httpClient = new HttpClient())
-                {
-                    HostInfo? hostInfo;
+                HostInfo? hostInfo;
 
-                    if (agent == Environment.MachineName)                   
-                        hostInfo = await httpClient.GetFromJsonAsync<HostInfo>("https://localhost/info");                    
-                    else                    
-                        hostInfo = await httpClient.GetFromJsonAsync<HostInfo>($"https://{agent}/info");                   
+                hostInfo = await HttpClient.GetFromJsonAsync<HostInfo>("https://localhost/info");      
 
-                    if (hostInfo != null)
-                        hosts.Add(hostInfo);
-                }
+                if (hostInfo != null)
+                    hosts.Add(agent, hostInfo);               
             }
         }
+    }
+
+    private async Task GetAgents()
+    {
+        if (Hub is not null)
+        {
+            await Hub.SendAsync("GetAgents");
+        }
+    }
+
+    private async Task StartRequired(string agent)
+    {
+        if (Hub is not null)
+        {
+            await Hub.SendAsync("StartRequired", agent, null);
+        }
+    }
+
+    private async Task Start()
+    {
+        if (Hub is not null)
+        {
+            await Hub.SendAsync("Start");
+        }
+    }
+
+    private async Task StopRequired(string agent)
+    {
+        if (Hub is not null)
+        {
+            await Hub.SendAsync("StopRequired", agent);
+        }
+    }
+
+    private async Task Stop()
+    {
+        if (Hub is not null)
+        {
+            await Hub.SendAsync("Stop");
+        }
+    }
+
+    private void ReceiveAll()
+    {
+        Hub.On<string>("ReceiveError", (error) =>
+        {
+            this.error = error;
+            StateHasChanged();
+        });
+
+        Hub.On<List<string>>("ReceiveAgents", (agents) =>
+        {
+            this.agents = agents;
+            StateHasChanged();
+        });
+
+        Hub.On<string>("ReceiveMessage", (message) =>
+        {
+            StateHasChanged();
+        });
+
+        Hub.On<ulong>("ReceiveDelay", (delay) =>
+        {
+            StateHasChanged();
+        });
+
+        Hub.On<Jitter>("ReceiveJitter", (jitter) =>
+        {
+            StateHasChanged();
+        });
+
+        Hub.On<Packet>("ReceivePacket", (packet) =>
+        {
+            StateHasChanged();
+        });
+
+        Hub.On<List<Statistics>>("ReceiveStatistics", (statistics) =>
+        {
+            StateHasChanged();
+        });
+
+        Hub.On<Throughput>("ReceiveThroughput", (throughput) =>
+        {
+            StateHasChanged();
+        });
     }
 }

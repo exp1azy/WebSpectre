@@ -2,6 +2,8 @@
 {
     public class HostInfo
     {
+        public string MachineName { get; set; }
+
         public string OSVersion { get; set; }
 
         public Hardware Hardware { get; set; }

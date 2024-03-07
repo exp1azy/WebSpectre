@@ -17,6 +17,6 @@ namespace WebSpectre.Server.Repositories.Interfaces
         /// <param name="offset">Смещение.</param>
         /// <param name="count">Количество элементов в потоке.</param>
         /// <returns>Массив <see cref="StreamEntry"/>, представляющий элементы потока.</returns>
-        public Task<StreamEntry[]> ReadStreamAsync(RedisKey key, RedisValue offset, int count);
+        public Task<StreamEntry[]> ReadStreamAsync(RedisKey key, RedisValue offset, int? count = null);
     }
 }

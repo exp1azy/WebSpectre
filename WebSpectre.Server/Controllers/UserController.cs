@@ -5,7 +5,7 @@ using WebSpectre.Server.Services.Interfaces;
 namespace WebSpectre.Server.Controllers
 {
     [ApiController]
-    [Route("api.webspectre/user")]
+    [Route("api.webspectre")]
     public class UserController : Controller
     {
         private readonly IUserService _userService;

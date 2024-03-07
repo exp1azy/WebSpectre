@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using PacketDotNet;
+using Serilog;
 using StackExchange.Redis;
-using WebSpectre.Server.Entities;
+using WebSpectre.Shared.Perfomance;
 using WebSpectre.Server.Exceptions;
 using WebSpectre.Server.Hubs;
 using WebSpectre.Server.Repositories.Interfaces;
@@ -18,6 +19,9 @@ namespace WebSpectre.Server.Services
         private readonly IHubContext<NetworkHub> _hubContext;
         private readonly IConfiguration _config;
 
+        private Dictionary<string, Task?> _monitorTasks;
+        private Dictionary<string, CancellationTokenSource?> _monitorCancellations;
+
         public MonitoringService(
             PerfomanceCalculator perfomanceCalc, 
             IRedisRepository redisRepository, 
@@ -30,85 +34,171 @@ namespace WebSpectre.Server.Services
             _config = config;
         }
 
-        public async Task<List<string>> GetAgentsAsync(CancellationToken cancellationToken)
+        public async Task SendAgentsAsync()
         {
             try
             {
                 var keys = GetAgents().Select(a => a.ToString()).ToList();
 
-               return keys;
+                await _hubContext.Clients.All.SendAsync("ReceiveAgents", keys);
             }
-            catch (ReadingConfigurationException)
+            catch (ReadingConfigurationException ex)
             {
-                throw;
+                await _hubContext.Clients.All.SendAsync("ReceiveError", ex.Message);
+                Log.Logger.Error(ex.Message);
             }
-            catch (NoAgentsException)
+            catch (NoAgentsException ex)
             {
-                throw;
-            }
-        }
-
-        public async Task SendNetworkFromStreamAsync(string agent, int count, CancellationToken cancellationToken)
-        {
-            if (!int.TryParse(_config["StreamReadDelay"], out int streamReadDelay))
-                throw new ReadingConfigurationException(Error.FailedToReadStreamReadDelay);
-
-            try
-            {
-                await GetAndSendNetworkAsync(agent, count, streamReadDelay, cancellationToken);
-            }
-            catch (WebSpectreRedisConnectionException)
-            {
-                throw;
-            }
-            catch (ApplicationException)
-            {
-                throw;
+                await _hubContext.Clients.All.SendAsync("ReceiveError", ex.Message);
+                Log.Logger.Error(ex.Message);
             }
         }
 
-        public async Task SendNetworkFromStreamAsync(int count, CancellationToken cancellationToken)
+        public async Task SendNetworkFromRequiredAgentAsync(string agent, int? count = null)
         {
-            if (!int.TryParse(_config["StreamReadDelay"], out int streamReadDelay))
-                throw new ReadingConfigurationException(Error.FailedToReadStreamReadDelay);
-
-            IEnumerable<RedisKey> keys;
-
-            try
+            if (_monitorTasks.GetValueOrDefault(agent) == null || _monitorTasks.GetValueOrDefault(agent).IsCompleted)
             {
-                keys = GetAgents();
-            }
-            catch (ReadingConfigurationException)
-            {
-                throw;
-            }
-            catch (NoAgentsException)
-            {
-                throw;
-            }
+                int streamDelay;
 
-            var tasks = new List<Task>();
-
-            foreach (var key in keys)
-            {
-                tasks.Add(Task.Run(async () =>
+                try
                 {
-                    try
+                    streamDelay = GetStreamDelay();
+                }
+                catch (ReadingConfigurationException ex)
+                {
+                    streamDelay = 10;
+
+                    await _hubContext.Clients.All.SendAsync("ReceiveError", ex.Message);
+                    Log.Logger.Warning(ex.Message);
+                }
+
+                try
+                {
+                    var agentCancellation = _monitorCancellations.GetValueOrDefault(agent);
+                    agentCancellation = new CancellationTokenSource();
+
+                    await GetAndSendNetworkAsync(agent, streamDelay, count, agentCancellation.Token);
+                }
+                catch (RedisConnectionException)
+                {
+                    await _hubContext.Clients.All.SendAsync("ReceiveError", Error.NoConnectionToRedis);
+                    Log.Logger.Error(Error.NoConnectionToRedis);
+                }
+                catch (Exception ex)
+                {
+                    await _hubContext.Clients.All.SendAsync("ReceiveError", $"{Error.Unexpected}: {ex.Message}");
+                    Log.Logger.Error(ex.Message);
+                }
+            }           
+        }
+
+        public async Task SendNetworkFromAllAgentsAsync(int? count = null)
+        {
+            if (_monitorTasks.Values.All(t => t == null) || _monitorTasks.Values.All(t => t.IsCompleted))
+            {
+                int streamDelay;
+
+                try
+                {
+                    streamDelay = GetStreamDelay();
+                }
+                catch (ReadingConfigurationException ex)
+                {
+                    streamDelay = 10;
+
+                    await _hubContext.Clients.All.SendAsync("ReceiveError", ex.Message);
+                    Log.Logger.Warning(ex.Message);
+                }
+
+                IEnumerable<RedisKey> agents;
+
+                try
+                {
+                    agents = GetAgents();
+                }
+                catch (ReadingConfigurationException ex)
+                {
+                    await _hubContext.Clients.All.SendAsync("ReceiveError", ex.Message);
+                    Log.Logger.Error(ex.Message);
+                    return;
+                }
+                catch (NoAgentsException ex)
+                {
+                    await _hubContext.Clients.All.SendAsync("ReceiveError", ex.Message);
+                    Log.Logger.Error(ex.Message);
+                    return;
+                }
+
+                var tasks = new List<Task>();
+
+                foreach (var agent in agents)
+                {
+                    tasks.Add(Task.Run(async () =>
                     {
-                        await GetAndSendNetworkAsync(key, count, streamReadDelay, cancellationToken);
-                    }
-                    catch (WebSpectreRedisConnectionException)
-                    {
-                        throw;
-                    }
-                    catch (ApplicationException)
-                    {
-                        throw;
-                    }
-                }));
+                        try
+                        {
+                            var agentCancellation = _monitorCancellations.GetValueOrDefault(agent);
+                            agentCancellation = new CancellationTokenSource();
+
+                            await GetAndSendNetworkAsync(agent, streamDelay, count, agentCancellation.Token);
+                        }
+                        catch (RedisConnectionException)
+                        {
+                            await _hubContext.Clients.All.SendAsync("ReceiveError", Error.NoConnectionToRedis);
+                            Log.Logger.Error(Error.NoConnectionToRedis);
+                        }
+                        catch (Exception ex)
+                        {
+                            await _hubContext.Clients.All.SendAsync("ReceiveError", $"{Error.Unexpected}: {ex.Message}");
+                            Log.Logger.Error(ex.Message);
+                        }
+                    }));
+                }
+
+                await Task.WhenAll(tasks);
+            }           
+        }
+
+        public async Task StopRequiredAsync(string agent)
+        {
+            var agentTask = _monitorTasks.GetValueOrDefault(agent);
+            var agentCancellation = _monitorCancellations.GetValueOrDefault(agent);
+
+            if (agentTask != null)
+            {
+                agentCancellation!.Cancel();
+
+                await agentTask;
+
+                agentCancellation.Dispose();
+            }
+        }
+
+        public async Task StopAllAsync()
+        {
+            IEnumerable<RedisKey> agents;
+
+            try
+            {
+                agents = GetAgents();
+            }
+            catch (ReadingConfigurationException ex)
+            {
+                await _hubContext.Clients.All.SendAsync("ReceiveError", ex.Message);
+                Log.Logger.Error(ex.Message);
+                return;
+            }
+            catch (NoAgentsException ex)
+            {
+                await _hubContext.Clients.All.SendAsync("ReceiveError", ex.Message);
+                Log.Logger.Error(ex.Message);
+                return;
             }
 
-            await Task.WhenAll(tasks);
+            foreach (var agent in agents)
+            {
+                await StopRequiredAsync(agent);
+            }
         }
 
         private IEnumerable<RedisKey> GetAgents()
@@ -127,10 +217,10 @@ namespace WebSpectre.Server.Services
             return keys;
         }
 
-        private async Task GetAndSendNetworkAsync(RedisKey agent, int count, int streamReadDelay, CancellationToken cancellationToken)
+        private async Task GetAndSendNetworkAsync(RedisKey agent, int streamReadDelay, int? count = null, CancellationToken cancellationToken = default)
         {
             var offset = StreamPosition.Beginning;
-            while (true)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
@@ -197,15 +287,23 @@ namespace WebSpectre.Server.Services
 
                     offset = entries.Last().Id;
                 }
-                catch (RedisConnectionException ex)
+                catch (RedisConnectionException)
                 {
-                    throw new WebSpectreRedisConnectionException(Error.NoConnectionToRedis, ex);
+                    throw;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    throw new ApplicationException(Error.Unexpected, ex);
+                    throw;
                 }
             }
+        }
+
+        private int GetStreamDelay()
+        {
+            if (!int.TryParse(_config["StreamReadDelay"], out int streamReadDelay))
+                throw new ReadingConfigurationException(Error.FailedToReadStreamReadDelay);
+
+            return streamReadDelay;
         }
     }
 } 

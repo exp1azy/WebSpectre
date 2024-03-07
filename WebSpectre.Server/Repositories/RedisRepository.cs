@@ -33,7 +33,7 @@ namespace WebSpectre.Server.Repositories
                 yield return new RedisKey(key);
         }
 
-        public async Task<StreamEntry[]> ReadStreamAsync(RedisKey key, RedisValue offset, int count) =>
+        public async Task<StreamEntry[]> ReadStreamAsync(RedisKey key, RedisValue offset, int? count = null) =>
             await _redisDatabase.StreamReadAsync(key, offset, count);
     }
 }
