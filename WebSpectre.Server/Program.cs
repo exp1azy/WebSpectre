@@ -1,11 +1,6 @@
 using Microsoft.AspNetCore.ResponseCompression;
 using Serilog;
-using WebSpectre.Client.Data;
 using WebSpectre.Server.Hubs;
-using WebSpectre.Server.Repositories;
-using WebSpectre.Server.Repositories.Interfaces;
-using WebSpectre.Server.Services;
-using WebSpectre.Server.Services.Interfaces;
 using WebSpectre.Server.Startup;
 
 namespace WebSpectre.Server
@@ -19,9 +14,6 @@ namespace WebSpectre.Server
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-
-            builder.AddElastic();
-            builder.AddRedis();
 
             builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
             {
@@ -41,13 +33,9 @@ namespace WebSpectre.Server
                 .WriteTo.File(builder.Configuration["LogFile"]!)
                 .CreateLogger();
 
-            builder.Services.AddDbContext<DataContext>();
-
-            builder.Services.AddTransient<IRedisRepository, RedisRepository>();
-            builder.Services.AddTransient<IMonitoringService, MonitoringService>();
-            builder.Services.AddTransient<IUserRepository, UserRepository>();
-            builder.Services.AddTransient<IUserService, UserService>();
-            builder.Services.AddTransient<PerfomanceCalculator>();
+            builder.AddElastic();
+            builder.AddRedis();
+            builder.AddServices();
 
             var app = builder.Build();
 

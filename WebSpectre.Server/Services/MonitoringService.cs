@@ -92,73 +92,6 @@ namespace WebSpectre.Server.Services
             }           
         }
 
-        public async Task SendNetworkFromAllAgentsAsync(int? count = null)
-        {
-            if (_monitorTasks.Values.All(t => t == null) || _monitorTasks.Values.All(t => t.IsCompleted))
-            {
-                int streamDelay;
-
-                try
-                {
-                    streamDelay = GetStreamDelay();
-                }
-                catch (ReadingConfigurationException ex)
-                {
-                    streamDelay = 10;
-
-                    await _hubContext.Clients.All.SendAsync("ReceiveError", ex.Message);
-                    Log.Logger.Warning(ex.Message);
-                }
-
-                IEnumerable<RedisKey> agents;
-
-                try
-                {
-                    agents = GetAgents();
-                }
-                catch (ReadingConfigurationException ex)
-                {
-                    await _hubContext.Clients.All.SendAsync("ReceiveError", ex.Message);
-                    Log.Logger.Error(ex.Message);
-                    return;
-                }
-                catch (NoAgentsException ex)
-                {
-                    await _hubContext.Clients.All.SendAsync("ReceiveError", ex.Message);
-                    Log.Logger.Error(ex.Message);
-                    return;
-                }
-
-                var tasks = new List<Task>();
-
-                foreach (var agent in agents)
-                {
-                    tasks.Add(Task.Run(async () =>
-                    {
-                        try
-                        {
-                            var agentCancellation = _monitorCancellations.GetValueOrDefault(agent);
-                            agentCancellation = new CancellationTokenSource();
-
-                            await GetAndSendNetworkAsync(agent, streamDelay, count, agentCancellation.Token);
-                        }
-                        catch (RedisConnectionException)
-                        {
-                            await _hubContext.Clients.All.SendAsync("ReceiveError", Error.NoConnectionToRedis);
-                            Log.Logger.Error(Error.NoConnectionToRedis);
-                        }
-                        catch (Exception ex)
-                        {
-                            await _hubContext.Clients.All.SendAsync("ReceiveError", $"{Error.Unexpected}: {ex.Message}");
-                            Log.Logger.Error(ex.Message);
-                        }
-                    }));
-                }
-
-                await Task.WhenAll(tasks);
-            }           
-        }
-
         public async Task StopRequiredAsync(string agent)
         {
             var agentTask = _monitorTasks.GetValueOrDefault(agent);
@@ -171,33 +104,6 @@ namespace WebSpectre.Server.Services
                 await agentTask;
 
                 agentCancellation.Dispose();
-            }
-        }
-
-        public async Task StopAllAsync()
-        {
-            IEnumerable<RedisKey> agents;
-
-            try
-            {
-                agents = GetAgents();
-            }
-            catch (ReadingConfigurationException ex)
-            {
-                await _hubContext.Clients.All.SendAsync("ReceiveError", ex.Message);
-                Log.Logger.Error(ex.Message);
-                return;
-            }
-            catch (NoAgentsException ex)
-            {
-                await _hubContext.Clients.All.SendAsync("ReceiveError", ex.Message);
-                Log.Logger.Error(ex.Message);
-                return;
-            }
-
-            foreach (var agent in agents)
-            {
-                await StopRequiredAsync(agent);
             }
         }
 

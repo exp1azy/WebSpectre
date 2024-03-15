@@ -18,8 +18,7 @@ namespace WebSpectre.Server.Repositories
 
         public IEnumerable<RedisKey> GetRedisKeys(string host, int port)
         {
-            IServer? server = default;
-
+            IServer? server;
             try
             {
                 server = _redisConnection!.GetServer(host, port);

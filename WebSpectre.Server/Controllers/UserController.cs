@@ -5,7 +5,7 @@ using WebSpectre.Server.Services.Interfaces;
 namespace WebSpectre.Server.Controllers
 {
     [ApiController]
-    [Route("api.webspectre")]
+    [Route("api.webspectre/user")]
     public class UserController : Controller
     {
         private readonly IUserService _userService;
@@ -22,7 +22,7 @@ namespace WebSpectre.Server.Controllers
             {
                 await _userService.AddUserAsync(u, p, cancellationToken);
             }
-            catch (UserAlreadyExistException)
+            catch (EntityAlreadyExistException)
             {
                 return BadRequest();
             }

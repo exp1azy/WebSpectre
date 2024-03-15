@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace WebSpectre.Client.Data
+namespace WebSpectre.Server.Data
 {
     public class DataContext : DbContext
     {
@@ -11,11 +11,13 @@ namespace WebSpectre.Client.Data
             _config = config;
         }
 
-        public DbSet<User> Users { get; set; }
+        public DbSet<Admin> Admins { get; set; }
+
+        public DbSet<Agent> Agents { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            var connection = _config.GetConnectionString("SqliteConnection");
+            var connection = _config.GetConnectionString("DbConnection");
 
             optionsBuilder.UseSqlite(connection);
         }

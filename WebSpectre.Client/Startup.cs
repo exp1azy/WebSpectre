@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
+using WebSpectre.Client.Services;
 
 namespace WebSpectre.Client
 {
@@ -15,15 +16,12 @@ namespace WebSpectre.Client
                     .Build();
             });
 
-            services.AddScoped(sp =>
-            {
-                var config = sp.GetService<IConfiguration>();
+            services.AddScoped<HttpClient>();
 
-                return new HttpClient { BaseAddress = new Uri($"{config.GetApiUrl()}/") };
-            });
+            services.AddTransient<NetworkHandler>();
         }
 
-        public static string GetApiUrl(this IConfiguration config) 
+        public static string GetApiUrl(this IConfiguration config)
         {
             var apiUrl = config["ApiUrl"];
 

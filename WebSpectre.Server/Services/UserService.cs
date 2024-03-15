@@ -5,20 +5,15 @@ using WebSpectre.Shared.Models;
 
 namespace WebSpectre.Server.Services
 {
-    public class UserService : IUserService
+    public class UserService(IUserRepository userRepository) : IUserService
     {
-        private readonly IUserRepository _userRepository;
-
-        public UserService(IUserRepository userRepository)
-        {
-            _userRepository = userRepository;
-        }
+        private readonly IUserRepository _userRepository = userRepository;
 
         public async Task AddUserAsync(string username, string password, CancellationToken cancellationToken)
         {
             var existUser = await _userRepository.GetExistAsync(username, cancellationToken);
             if (existUser != null)
-                throw new UserAlreadyExistException();
+                throw new EntityAlreadyExistException();
 
             await _userRepository.AddAsync(new UserModel
             {

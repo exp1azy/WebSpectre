@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34511.84
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSpectre.Client", "WebSpectre.Client\WebSpectre.Client.csproj", "{63C51CFB-C322-428B-9036-E3D23D2F0359}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSpectre.Server", "WebSpectre.Server\WebSpectre.Server.csproj", "{D96D58B4-6CFA-4091-AE90-C6E3157E4BF8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSpectre.Shared", "WebSpectre.Shared\WebSpectre.Shared.csproj", "{59F9B1C7-017C-478C-9DC5-A49AB1970E9A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSpectre.Client", "WebSpectre.Client\WebSpectre.Client.csproj", "{37136ECC-21EB-4331-9614-83C2D8508B1A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,10 +15,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{63C51CFB-C322-428B-9036-E3D23D2F0359}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{63C51CFB-C322-428B-9036-E3D23D2F0359}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{63C51CFB-C322-428B-9036-E3D23D2F0359}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{63C51CFB-C322-428B-9036-E3D23D2F0359}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D96D58B4-6CFA-4091-AE90-C6E3157E4BF8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D96D58B4-6CFA-4091-AE90-C6E3157E4BF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D96D58B4-6CFA-4091-AE90-C6E3157E4BF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -27,6 +23,10 @@ Global
 		{59F9B1C7-017C-478C-9DC5-A49AB1970E9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{59F9B1C7-017C-478C-9DC5-A49AB1970E9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{59F9B1C7-017C-478C-9DC5-A49AB1970E9A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37136ECC-21EB-4331-9614-83C2D8508B1A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37136ECC-21EB-4331-9614-83C2D8508B1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37136ECC-21EB-4331-9614-83C2D8508B1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37136ECC-21EB-4331-9614-83C2D8508B1A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
