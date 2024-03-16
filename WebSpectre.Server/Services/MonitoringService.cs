@@ -18,6 +18,7 @@ namespace WebSpectre.Server.Services
         private readonly IRedisRepository _redisRepository;
         private readonly IHubContext<NetworkHub> _hubContext;
         private readonly IConfiguration _config;
+        private readonly IAgentService _agentService;
 
         private Dictionary<string, Task?> _monitorTasks;
         private Dictionary<string, CancellationTokenSource?> _monitorCancellations;
@@ -25,11 +26,13 @@ namespace WebSpectre.Server.Services
         public MonitoringService(
             PerfomanceCalculator perfomanceCalc, 
             IRedisRepository redisRepository, 
+            IAgentService agentService,
             IHubContext<NetworkHub> hubContext, 
             IConfiguration config)
         {
             _perfomanceCalc = perfomanceCalc;
             _redisRepository = redisRepository;
+            _agentService = agentService;
             _hubContext = hubContext;
             _config = config;
         }
@@ -38,9 +41,40 @@ namespace WebSpectre.Server.Services
         {
             try
             {
+                var agents = new Dictionary<string, string?>();
+
+                var keys = GetAgents().Select(a => a.ToString()).ToList();
+                foreach (var key in keys)
+                {
+                    var url = await _agentService.GetAgentUrlAsync(key);
+                    agents.Add(key, url);
+                }
+
+                await _hubContext.Clients.All.SendAsync("ReceiveAgents", agents);
+            }
+            catch (NoSuchAgentException)
+            {
+                ;
+            }
+            catch (ReadingConfigurationException ex)
+            {
+                await _hubContext.Clients.All.SendAsync("ReceiveError", ex.Message);
+                Log.Logger.Error(ex.Message);
+            }
+            catch (NoAgentsException ex)
+            {
+                await _hubContext.Clients.All.SendAsync("ReceiveError", ex.Message);
+                Log.Logger.Error(ex.Message);
+            }
+        }
+
+        public async Task SendHostnamesAsync()
+        {
+            try
+            {
                 var keys = GetAgents().Select(a => a.ToString()).ToList();
 
-                await _hubContext.Clients.All.SendAsync("ReceiveAgents", keys);
+                await _hubContext.Clients.All.SendAsync("ReceiveHostnames", keys);
             }
             catch (ReadingConfigurationException ex)
             {

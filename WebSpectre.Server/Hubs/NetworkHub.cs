@@ -7,8 +7,11 @@ namespace WebSpectre.Server.Hubs
     {
         private readonly IMonitoringService _monitoringService = monitoringService;
 
-        public async Task GetAgents() =>      
+        public async Task GetAgents() =>
             await _monitoringService.SendAgentsAsync();
+
+        public async Task GetHostnames() =>      
+            await _monitoringService.SendHostnamesAsync();
         
         public async Task StartRequired(string agent, int? count = null) =>       
             await _monitoringService.SendNetworkFromRequiredAgentAsync(agent, count);       

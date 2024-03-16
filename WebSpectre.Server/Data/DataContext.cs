@@ -19,7 +19,7 @@ namespace WebSpectre.Server.Data
         {
             var connection = _config.GetConnectionString("DbConnection");
 
-            optionsBuilder.UseSqlite(connection);
+            optionsBuilder.UseNpgsql(connection);
         }
     }
 }

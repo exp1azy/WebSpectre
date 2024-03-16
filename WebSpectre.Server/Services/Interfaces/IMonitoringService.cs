@@ -2,6 +2,8 @@
 {
     public interface IMonitoringService
     {
+        public Task SendAgentsAsync();
+
         /// <summary>
         /// Чтение указанного потока Redis.
         /// </summary>
@@ -19,6 +21,6 @@
         /// Получить агентов.
         /// </summary>
         /// <returns></returns>
-        public Task SendAgentsAsync();
+        public Task SendHostnamesAsync();
     }
 }

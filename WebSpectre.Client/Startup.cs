@@ -16,9 +16,13 @@ namespace WebSpectre.Client
                     .Build();
             });
 
-            services.AddScoped<HttpClient>();
+            services.AddSingleton(sp =>
+            {
+                var httpClient = sp.GetService<HttpClient>();
+                var hubConnection = sp.GetService<HubConnection>();
 
-            services.AddTransient<NetworkHandler>();
+                return new NetworkHandler(httpClient, hubConnection);
+            });
         }
 
         public static string GetApiUrl(this IConfiguration config)

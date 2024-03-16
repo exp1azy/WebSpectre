@@ -1,4 +1,6 @@
-﻿@page "/"
+﻿@inject NetworkHandler NetworkHandler
+
+@page "/"
 
 <PageTitle>Мониторинг</PageTitle>
 
@@ -6,197 +8,134 @@
     <button class="ws-add">Добавить агента</button>
 </div>
 <div class="ws-agents">
-    <div class="ws-agent">
-        <div class="ws-agent-host">
-            <img src="icons/host.png" alt="agent" class="agent-icon">
-            <span class="ws-agent-hostname">HOST1</span>
-            <div class="state red"></div>
-        </div>
-        <div class="ws-agent-info">
-            <button class="ws-agent-button-disabled" disabled>Информация</button>
-            <button class="ws-agent-button-disabled" disabled>Сетевые адаптеры</button>
-            <button class="ws-agent-delete">Удалить агента</button>
-        </div>
-        <div class="ws-agent-state">
-            <button class="ws-agent-start-disabled">Запустить</button>
-        </div>
-    </div>
-    <div class="ws-agent">
-        <div class="ws-agent-host">
-            <img src="icons/host.png" alt="agent" class="agent-icon">
-            <span class="ws-agent-hostname">HOST2</span>
-            <div class="state orange"></div>
-        </div>
-        <div class="ws-agent-info">
-            <button class="ws-agent-button">Информация</button>
-            <button class="ws-agent-button">Сетевые адаптеры</button>
-            <button class="ws-agent-delete">Удалить агента</button>
-        </div>
-        <div class="ws-agent-state">
-            <button class="ws-agent-start">Запустить</button>
-        </div>
-    </div>
-    <div class="ws-agent-activated">
-        <div class="ws-agent-interact">
-            <div class="ws-agent-host">
-                <img src="icons/host.png" alt="agent" class="agent-icon">
-                <span class="ws-agent-hostname">HOST3</span>
-                <div class="state green"></div>
-            </div>
-            <div class="ws-agent-info">
-                <button class="ws-agent-button">Информация</button>
-                <button class="ws-agent-button">Сетевые адаптеры</button>
-                <button class="ws-agent-delete">Удалить агента</button>
-            </div>
-            <div class="ws-agent-state">
-                <button class="ws-agent-stop">Остановить</button>
-            </div>
-        </div>
-        <div class="ws-agent-started">
-            <div class="ws-agent-network-state">
-                <div class="ws-network-data">
-                    <span class="network-title">Полученные пакеты</span>
-                    <span class="network-value">10</span>
+    @if (hosts != null)
+    {
+        foreach (var host in hosts)
+        {
+            <div class="ws-agent">
+                <div class="ws-agent-host">
+                    <img src="icons/host.png" alt="agent" class="agent-icon">
+                    <span class="ws-agent-hostname">@host.Key</span>
+                    @{
+                        var status = hostsStatus.GetValueOrDefault(host.Key);
+                        if (status == null)
+                        {
+                            <div class="state red"></div>
+                        }
+                        else if ((bool)status)
+                        {
+                            <div class="state green"></div>
+                        }
+                        else
+                        {
+                            <div class="state orange"></div>
+                        }
+                    }                 
                 </div>
-                <div class="ws-network-data">
-                    <span class="network-title">Потерянные пакеты</span>
-                    <span class="network-value">0</span>
+                <div class="ws-agent-info">
+                    @{
+                        if (hostsStatus.GetValueOrDefault(host.Key) == null)
+                        {
+                            <button class="ws-agent-button-disabled" disabled>Информация</button>
+                            <button class="ws-agent-button-disabled" disabled>Сетевые адаптеры</button>
+                        }
+                        else
+                        {
+                            <button class="ws-agent-button" disabled>Информация</button>
+                            <button class="ws-agent-button" disabled>Сетевые адаптеры</button>
+                        }
+                    }
+                    <button class="ws-agent-delete">Удалить агента</button>
                 </div>
-                <div class="ws-network-data">
-                    <span class="network-title">Потерянные пакеты на интерфейсе</span>
-                    <span class="network-value">0</span>
-                </div>
-                <div class="ws-network-data">
-                    <span class="network-title">Пропускная способность</span>
-                    <span class="network-value">10</span>
-                </div>
-                <div class="ws-network-data">
-                    <span class="network-title">Джиттер</span>
-                    <span class="network-value">0</span>
-                </div>
-                <div class="ws-network-data">
-                    <span class="network-title">Задержка сети</span>
-                    <span class="network-value">0</span>
+                <div class="ws-agent-state">
+                    <button class="ws-agent-start-disabled">Запустить</button>
                 </div>
             </div>
-            <div class="ws-agent-network-msg">
-                <span class="network-message">Проблем в сети не обнаружено</span>
-            </div>
-            <div class="ws-packets-arrived">
-                <table class="ws-table">
-                    <thead>
-                        <tr>
-                            <th>Номер</th>
-                            <th>Источник</th>
-                            <th>Назначение</th>
-                            <th>Протокол</th>
-                            <th>Информация</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="tcp-raw">
-                            <td>1</td>
-                            <td>192.168.0.1</td>
-                            <td>192.168.0.2</td>
-                            <td>TCP</td>
-                            <td>Какая-то информация 123123123123123123123123123123123123123</td>
-                        </tr>
-                        <tr class="udp-raw">
-                            <td>2</td>
-                            <td>192.168.0.2</td>
-                            <td>192.168.0.1</td>
-                            <td>UDP</td>
-                            <td>Какая-то информация</td>
-                        </tr>
-                        <tr class="ip-raw">
-                            <td>3</td>
-                            <td>192.168.0.1</td>
-                            <td>192.168.0.3</td>
-                            <td>IP</td>
-                            <td>Какая-то информация</td>
-                        </tr>
-                        <tr class="tcp-raw">
-                            <td>4</td>
-                            <td>192.168.0.1</td>
-                            <td>192.168.0.2</td>
-                            <td>TCP</td>
-                            <td>Какая-то информация</td>
-                        </tr>
-                        <tr class="tcp-raw">
-                            <td>5</td>
-                            <td>192.168.0.1</td>
-                            <td>192.168.0.2</td>
-                            <td>TCP</td>
-                            <td>Какая-то информация</td>
-                        </tr>
-                        <tr class="udp-raw">
-                            <td>6</td>
-                            <td>192.168.0.2</td>
-                            <td>192.168.0.1</td>
-                            <td>UDP</td>
-                            <td>Какая-то информация</td>
-                        </tr>
-                        <tr class="udp-raw">
-                            <td>7</td>
-                            <td>192.168.0.2</td>
-                            <td>192.168.0.1</td>
-                            <td>UDP</td>
-                            <td>Какая-то информация</td>
-                        </tr>
-                        <tr class="ip-raw">
-                            <td>8</td>
-                            <td>192.168.0.1</td>
-                            <td>192.168.0.3</td>
-                            <td>IP</td>
-                            <td>Какая-то информация</td>
-                        </tr>
-                        <tr class="ip-raw">
-                            <td>9</td>
-                            <td>192.168.0.1</td>
-                            <td>192.168.0.3</td>
-                            <td>IP</td>
-                            <td>Какая-то информация</td>
-                        </tr>
-                        <tr class="tcp-raw">
-                            <td>10</td>
-                            <td>192.168.0.1</td>
-                            <td>192.168.0.2</td>
-                            <td>TCP</td>
-                            <td>Какая-то информация</td>
-                        </tr>
-                        <tr class="ip-raw">
-                            <td>11</td>
-                            <td>192.168.0.1</td>
-                            <td>192.168.0.3</td>
-                            <td>IP</td>
-                            <td>Какая-то информация</td>
-                        </tr>
-                        <tr class="ip-raw">
-                            <td>12</td>
-                            <td>192.168.0.1</td>
-                            <td>192.168.0.3</td>
-                            <td>IP</td>
-                            <td>Какая-то информация</td>
-                        </tr>
-                        <tr class="tcp-raw">
-                            <td>13</td>
-                            <td>192.168.0.1</td>
-                            <td>192.168.0.2</td>
-                            <td>TCP</td>
-                            <td>Какая-то информация</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-    </div>
+        }
+    }
+    else
+    {
+        <div class="ws-no-agents">Ожидаем получение агентов...</div>
+    }
 </div>
 
 @code {
-    
+    private string error;
+    private List<string> hostnames = new List<string>();
+    private Dictionary<string, HostInfo?> hosts = new Dictionary<string, HostInfo?>();
+    private Dictionary<string, bool?> hostsStatus = new Dictionary<string, bool?>();
+    private string message;
+    private ulong delay;
+    private Jitter jitter = new Jitter();
+    private Packet packet;
+    private List<Statistics> statistics = new List<Statistics>();
+    private Throughput throughput = new Throughput();
+
     protected override async Task OnInitializedAsync()
     {
-        
+        OnReceived();
+    }
+
+    private void OnReceived()
+    {
+        NetworkHandler.OnDelayReceived += (s, ea) =>
+        {
+            delay = ea.Delay;
+            StateHasChanged();
+        };
+
+        NetworkHandler.OnErrorReceived += (s, ea) =>
+        {
+            error = ea.Error;
+            StateHasChanged();
+        };
+
+        NetworkHandler.OnHostsReceived += (s, ea) =>
+        {
+            hosts = ea.Hosts;
+            StateHasChanged();
+        };
+
+        NetworkHandler.OnStatusReceived += (s, ea) =>
+        {
+            hostsStatus = ea.AgentsStatus;
+            StateHasChanged();
+        };
+
+        NetworkHandler.OnHostnamesReceived += (s, ea) =>
+        {
+            hostnames = ea.Hostnames;
+            StateHasChanged();
+        };
+
+        NetworkHandler.OnJitterReceived += (s, ea) =>
+        {
+            jitter = ea.Jitter;
+            StateHasChanged();
+        };
+
+        NetworkHandler.OnMessageReceived += (s, ea) =>
+        {
+            message = ea.Message;
+            StateHasChanged();
+        };
+
+        NetworkHandler.OnPacketReceived += (s, ea) =>
+        {
+            packet = ea.Packet;
+            StateHasChanged();
+        };
+
+        NetworkHandler.OnStatisticsReceived += (s, ea) =>
+        {
+            statistics = ea.Statistics;
+            StateHasChanged();
+        };
+
+        NetworkHandler.OnThroughputReceived += (s, ea) =>
+        {
+            throughput = ea.Throughput;
+            StateHasChanged();
+        };
     }
 }
