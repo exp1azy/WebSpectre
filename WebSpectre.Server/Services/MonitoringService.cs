@@ -41,7 +41,7 @@ namespace WebSpectre.Server.Services
         {
             try
             {
-                var agents = new Dictionary<string, string?>();
+             var agents = new Dictionary<string, string?>();
 
                 var keys = GetAgents().Select(a => a.ToString()).ToList();
                 foreach (var key in keys)

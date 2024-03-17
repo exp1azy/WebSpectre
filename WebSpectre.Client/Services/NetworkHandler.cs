@@ -73,7 +73,7 @@ namespace WebSpectre.Client.Services
                         var response = await _httpClient.GetAsync($"{agent.Value}/pcap/status");
                         if (response.IsSuccessStatusCode)
                         {
-                            status = JsonConvert.DeserializeObject<bool>(response.Content.ReadAsStringAsync().Result);
+                            status = bool.Parse(response.Content.ReadAsStringAsync().Result);
                         }
                     }
                     catch { }
@@ -155,6 +155,7 @@ namespace WebSpectre.Client.Services
             {
                 _hosts = agents;
                 _ = GetHostsInfoAsync();
+                _ = GetAgentsStatusAsync();
             });
 
             _hub.On<string>("ReceiveMessage", (message) =>

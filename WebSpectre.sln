@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSpectre.Server", "WebSpe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSpectre.Shared", "WebSpectre.Shared\WebSpectre.Shared.csproj", "{59F9B1C7-017C-478C-9DC5-A49AB1970E9A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSpectre.Client", "WebSpectre.Client\WebSpectre.Client.csproj", "{37136ECC-21EB-4331-9614-83C2D8508B1A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSpectre.Client", "WebSpectre.Client\WebSpectre.Client.csproj", "{37136ECC-21EB-4331-9614-83C2D8508B1A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

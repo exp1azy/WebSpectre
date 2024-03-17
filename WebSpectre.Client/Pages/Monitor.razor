@@ -7,57 +7,65 @@
 <div class="ws-add-delete-agent">
     <button class="ws-add">Добавить агента</button>
 </div>
-<div class="ws-agents">
-    @if (hosts.Any())
+@if (hosts.Any())
+{
+    <div class="ws-agents">
+    @foreach (var host in hosts)
     {
-        foreach (var host in hosts)
-        {
-            <div class="ws-agent">
-                <div class="ws-agent-host">
-                    <img src="icons/host.png" alt="agent" class="agent-icon">
-                    <span class="ws-agent-hostname">@host.Key</span>
-                    @{
-                        var status = hostsStatus.GetValueOrDefault(host.Key);
-                        if (status == null)
-                        {
-                            <div class="state red"></div>
-                        }
-                        else if ((bool)status)
-                        {
-                            <div class="state green"></div>
-                        }
-                        else
-                        {
-                            <div class="state orange"></div>
-                        }
-                    }                 
-                </div>
-                <div class="ws-agent-info">
-                    @{
-                        if (hostsStatus.GetValueOrDefault(host.Key) == null)
-                        {
-                            <button class="ws-agent-button-disabled" disabled>Информация</button>
-                            <button class="ws-agent-button-disabled" disabled>Сетевые адаптеры</button>
-                        }
-                        else
-                        {
-                            <button class="ws-agent-button" disabled>Информация</button>
-                            <button class="ws-agent-button" disabled>Сетевые адаптеры</button>
-                        }
+        <div class="ws-agent">
+            <div class="ws-agent-host">
+                <img src="icons/host.png" alt="agent" class="agent-icon">
+                <span class="ws-agent-hostname">@host.Key</span>
+                @{
+                    var status = hostsStatus.GetValueOrDefault(host.Key);
+                    if (status == null)
+                    {
+                        <div class="state red"></div>
                     }
-                    <button class="ws-agent-delete">Удалить агента</button>
-                </div>
-                <div class="ws-agent-state">
-                    <button class="ws-agent-start-disabled">Запустить</button>
-                </div>
-            </div>
-        }
+                    else if ((bool)status)
+                    {
+                        <div class="state green"></div>
+                    }
+                    else
+                    {
+                        <div class="state orange"></div>
+                    }
+                }                 
+            </div>              
+            @{
+                if (hostsStatus.GetValueOrDefault(host.Key) == null)
+                {
+                    <div class="ws-agent-info">
+                        <button class="ws-agent-button-disabled" disabled>Информация</button>
+                        <button class="ws-agent-button-disabled" disabled>Сетевые адаптеры</button>
+                        <button class="ws-agent-delete">Удалить агента</button>
+                    </div>
+                    <div class="ws-agent-state">
+                        <button class="ws-agent-start-disabled" disabled>Запустить</button>
+                    </div>
+                }
+                else
+                {
+                    <div class="ws-agent-info">
+                        <button class="ws-agent-button" @onclick="ShowAbout">Информация</button>
+                        <button class="ws-agent-button">Сетевые адаптеры</button>
+                        <button class="ws-agent-delete">Удалить агента</button>
+                    </div>
+                    <div class="ws-agent-state">
+                        <button class="ws-agent-start">Запустить</button>
+                    </div>
+                }
+            }              
+        </div>
+
+        <About IsModalOpen="isAboutOpen" Host="@host.Key" Info="host.Value"></About>
     }
-    else
-    {
-        <div class="ws-no-agents">Ожидаем получение агентов...</div>
-    }
-</div>
+    </div>
+}
+else
+{
+    <div class="ws-no-agents">Ожидаем получение агентов...</div>
+}
 
 @code {
     private string error;
@@ -70,6 +78,14 @@
     private Packet packet;
     private List<Statistics> statistics = new List<Statistics>();
     private Throughput throughput = new Throughput();
+
+    private bool isAboutOpen = false;
+
+    private void ShowAbout()
+    {
+        isAboutOpen = true;
+        StateHasChanged();
+    }
 
     protected override async Task OnInitializedAsync()
     {

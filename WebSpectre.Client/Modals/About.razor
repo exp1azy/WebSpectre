@@ -1,0 +1,50 @@
+﻿@if (IsModalOpen)
+{
+    <div class="modal">
+        <div class="modal-content">
+            <h3>@Host</h3>
+            <p>Имя машины: @Info.MachineName</p>
+            <p>Информация об ОС: @Info.OSVersion</p>
+            <p>Запущен ли захват: @Info.IsCaptureProcessing</p>
+            <p>Материнская плата: @Info.Hardware.MotherboardInfo</p>
+            <p>Процессор: @Info.Hardware.CPUInfo</p>
+            <p>Графический процессор: @Info.Hardware.GPUInfo</p>
+            <p>Количество оперативной памяти: @Info.Hardware.MemoryInfo</p>
+            <p>Адреса:</p>
+            @foreach (var address in Info.IPAddresses)
+            {
+                <p>@address</p>
+            }
+            <p>Доступные сетевые адаптеры:</p>
+            @foreach (var device in Info.AvailableDevices)
+            {
+                <p>@device.FriendlyName</p>
+                <p>@device.Description</p>
+                <p>@device.MacAddress</p>
+                <p>Адреса адаптера:</p>
+                foreach (var address in device.Addresses)
+                {
+                    <p>@address</p>
+                }
+                <p>Gateway:</p>
+                foreach (var gateway in device.GatewayAddresses)
+                {
+                    <p>@gateway</p>
+                }
+            }
+            <button @onclick="CloseModal">Закрыть</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsModalOpen { get; set; }
+    [Parameter] public string Host { get; set; }
+    [Parameter] public HostInfo Info { get; set; }
+
+    private void CloseModal()
+    {
+        IsModalOpen = false;
+        StateHasChanged();
+    }
+}
