@@ -15,16 +15,20 @@ namespace WebSpectre.Server.Services
             if (existUser != null)
                 throw new EntityAlreadyExistException();
 
+            var hashedPass = HashCreator.CreateSHA256(password);
+
             await _userRepository.AddAsync(new UserModel
             {
                 Username = username,
-                Password = password,
+                Password = hashedPass,
             }, cancellationToken);
         }
 
         public async Task<UserModel?> LoginUserAsync(string username, string password, CancellationToken cancellationToken)
         {
-            var loggedIn = await _userRepository.LoginAsync(username, password, cancellationToken);
+            var hashedPass = HashCreator.CreateSHA256(password);
+
+            var loggedIn = await _userRepository.LoginAsync(username, hashedPass, cancellationToken);
             if (loggedIn)            
                 return new UserModel { Username = username, Password = password };          
             

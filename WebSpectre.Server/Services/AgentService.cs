@@ -18,13 +18,13 @@ namespace WebSpectre.Server.Services
         /// <param name="agent">Агент.</param>
         /// <returns></returns>
         /// <exception cref="EntityAlreadyExistException"></exception>
-        public async Task AddAgentAsync(AgentModel agent)
+        public async Task AddAgentAsync(AgentModel agent, CancellationToken cancellationToken)
         {
-            var existAgent = await _agentRepository.GetAgentAsync(agent.HostName);
+            var existAgent = await _agentRepository.GetAgentAsync(agent.Hostname.ToLower());
             if (existAgent != null)
                 throw new EntityAlreadyExistException();
 
-            await _agentRepository.AddAgentAsync(agent);
+            await _agentRepository.AddAgentAsync(agent, cancellationToken);
         }
 
         /// <summary>
@@ -35,8 +35,7 @@ namespace WebSpectre.Server.Services
         /// <exception cref="NoSuchAgentException"></exception>
         public async Task<string> GetAgentUrlAsync(string hostname)
         {
-            var hostnameLower = hostname.ToLower();
-            var requiredAgent = await _agentRepository.GetAgentAsync(hostnameLower);
+            var requiredAgent = await _agentRepository.GetAgentAsync(hostname.ToLower());
 
             return requiredAgent == null ? throw new NoSuchAgentException() : requiredAgent.Url;
         }
@@ -44,14 +43,14 @@ namespace WebSpectre.Server.Services
         /// <summary>
         /// Удалить агента из базы данных.
         /// </summary>
-        /// <param name="agent">Агент.</param>
+        /// <param name="hostname">Имя хоста.</param>
         /// <returns></returns>
         /// <exception cref="NoSuchAgentException"></exception>
-        public async Task RemoveAgentAsync(AgentModel agent)
+        public async Task RemoveAgentAsync(string hostname)
         {
-            _ = await _agentRepository.GetAgentAsync(agent.HostName) ?? throw new NoSuchAgentException();
+            var agentToDelete = await _agentRepository.GetAgentAsync(hostname) ?? throw new NoSuchAgentException();
 
-            _agentRepository.RemoveAgent(agent);
+            _agentRepository.RemoveAgent(new AgentModel { Hostname = agentToDelete.Hostname, Url = agentToDelete.Url });
         }
     }
 }

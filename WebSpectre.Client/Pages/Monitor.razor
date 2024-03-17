@@ -8,7 +8,7 @@
     <button class="ws-add">Добавить агента</button>
 </div>
 <div class="ws-agents">
-    @if (hosts != null)
+    @if (hosts.Any())
     {
         foreach (var host in hosts)
         {

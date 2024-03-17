@@ -6,21 +6,16 @@ namespace WebSpectre.Server.Controllers
 {
     [ApiController]
     [Route("api.webspectre/user")]
-    public class UserController : Controller
+    public class UserController(IUserService userService) : Controller
     {
-        private readonly IUserService _userService;
-
-        public UserController(IUserService userService)
-        {
-            _userService = userService;
-        }
+        private readonly IUserService _userService = userService;
 
         [HttpPost("add")]
-        public async Task<IActionResult> Add([FromQuery] string u, [FromQuery] string p, CancellationToken cancellationToken)
+        public async Task<IActionResult> Add([FromQuery] string user, [FromQuery] string pass, CancellationToken cancellationToken)
         {
             try
             {
-                await _userService.AddUserAsync(u, p, cancellationToken);
+                await _userService.AddUserAsync(user, pass, cancellationToken);
             }
             catch (EntityAlreadyExistException)
             {
@@ -31,9 +26,9 @@ namespace WebSpectre.Server.Controllers
         }
 
         [HttpGet("login")]
-        public async Task<IActionResult> Login([FromQuery] string u, [FromQuery] string p, CancellationToken cancellationToken)
+        public async Task<IActionResult> Login([FromQuery] string user, [FromQuery] string pass, CancellationToken cancellationToken)
         {
-            var loggedIn = await _userService.LoginUserAsync(u, p, cancellationToken);
+            var loggedIn = await _userService.LoginUserAsync(user, pass, cancellationToken);
             if (loggedIn == null)
             {
                 return BadRequest();

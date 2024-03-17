@@ -5,14 +5,9 @@ using WebSpectre.Shared.Models;
 
 namespace WebSpectre.Server.Repositories
 {
-    public class UserRepository : IUserRepository
+    public class UserRepository(DataContext dataContext) : IUserRepository
     {
-        private readonly DataContext _dataContext;
-
-        public UserRepository(DataContext dataContext)
-        {
-            _dataContext = dataContext;
-        }
+        private readonly DataContext _dataContext = dataContext;
 
         public async Task AddAsync(UserModel user, CancellationToken cancellationToken) =>      
             await _dataContext.Admins.AddAsync(new Admin { Username = user.Username, Password = user.Username }, cancellationToken);

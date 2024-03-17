@@ -13,7 +13,7 @@ namespace WebSpectre.Server.Repositories.Interfaces
         /// </summary>
         /// <param name="agent">Агент.</param>
         /// <returns></returns>
-        public Task AddAgentAsync(AgentModel agent);
+        public Task AddAgentAsync(AgentModel agent, CancellationToken cancellationToken);
 
         /// <summary>
         /// Получить агента по имени хоста.

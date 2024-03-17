@@ -17,8 +17,8 @@ namespace WebSpectre.Server.Repositories
         /// </summary>
         /// <param name="agent">Агент.</param>
         /// <returns></returns>
-        public async Task AddAgentAsync(AgentModel agent) =>
-            await _dataContext.Agents.AddAsync(new Agent { Hostname = agent.HostName, Url = agent.Url });
+        public async Task AddAgentAsync(AgentModel agent, CancellationToken cancellationToken) =>
+            await _dataContext.Agents.AddAsync(new Agent { Hostname = agent.Hostname, Url = agent.Url }, cancellationToken);
 
         /// <summary>
         /// Получить агента по имени хоста.
@@ -33,6 +33,6 @@ namespace WebSpectre.Server.Repositories
         /// </summary>
         /// <param name="agent">Агент.</param>
         public void RemoveAgent(AgentModel agent) =>
-            _dataContext.Agents.Remove(new Agent { Hostname = agent.HostName, Url = agent.Url });
+            _dataContext.Agents.Remove(new Agent { Hostname = agent.Hostname, Url = agent.Url });
     }
 }
