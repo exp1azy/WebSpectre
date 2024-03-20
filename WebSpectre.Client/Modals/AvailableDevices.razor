@@ -1,0 +1,44 @@
+﻿@inherits BaseModal
+
+<Modal @ref="modal" Title="Информация об адаптерах" IsVerticallyCentered="true" IsScrollable="true">
+    <BodyTemplate>
+        <h3>@Host</h3>
+        @foreach (var device in Info.AvailableDevices)
+        {
+            <p>Имя: @device.FriendlyName</p>
+            <p>Описание: @device.Description</p>
+            <p>MAC-адрес: @device.MacAddress</p>
+            <p>Адреса адаптера: @(!device.Addresses.Any() ? "Нет информации" : string.Empty)</p>
+            if (device.Addresses.Any())
+            {
+                foreach (var address in device.Addresses)
+                {
+                    <p style="margin-left: 16px">@address.Address</p>
+                    <p style="margin-left: 16px">@address.DestAddr</p>
+                    <p style="margin-left: 16px">@address.BroadAddr</p>
+                    <p style="margin-left: 16px">@address.Netmask</p>
+                }
+            }
+            <p>Шлюз: @(!device.GatewayAddresses.Any() ? "Нет информации" : string.Empty)</p>
+            if (device.GatewayAddresses.Any())
+            {
+                foreach (var gateway in device.GatewayAddresses)
+                {
+                    <p style="margin-left: 16px">@gateway</p>
+                }
+            }
+            <div style="margin-top: 64px"></div>
+        }
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Primary" @onclick="OnHideModalClick">Закрыть</Button>
+    </FooterTemplate>
+</Modal>
+
+@code {
+    [Parameter] 
+    public string Host { get; set; }
+
+    [Parameter] 
+    public HostInfo Info { get; set; }
+}

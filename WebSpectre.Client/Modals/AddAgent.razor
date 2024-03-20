@@ -1,0 +1,50 @@
+﻿@inherits BaseModal
+
+@inject NetworkHandler NetworkHandler
+
+<Modal @ref="modal" Title="Регистрация агента" IsVerticallyCentered="true" IsScrollable="false">
+    <BodyTemplate>
+        <EditForm EditContext="@_editContext"  OnValidSubmit="HandleOnValidSubmit">
+        <DataAnnotationsValidator />
+            <div class="form-group row mb-2">
+                <label for="supplier" class="col-md-2 col-form-label">Имя:</label>
+                <div class="col-md-10">
+                    <InputText id="name" class="form-control" @bind-Value="agentModel.Hostname" />
+                    <ValidationMessage For="@(() => agentModel.Hostname)" />
+                </div>
+            </div>
+
+            <div class="form-group row mb-3">
+                <label for="name" class="col-md-2 col-form-label">URL:</label>
+                <div class="col-md-10">
+                    <InputText id="url" class="form-control" @bind-Value="agentModel.Url" />
+                    <ValidationMessage For="@(() => agentModel.Url)" />
+                </div>
+            </div>
+
+            <Button Color="ButtonColor.Secondary" @onclick="OnHideModalClick">Отмена</Button>
+            <Button Type="ButtonType.Submit" Color="ButtonColor.Primary">Добавить</Button>
+        </EditForm>
+    </BodyTemplate>
+</Modal>
+
+@code {
+    [Parameter]
+    public EventCallback<AgentModel?> OnSubmitSuccess { get; set; }
+
+    private AgentModel agentModel = new();
+    private EditContext _editContext;
+
+    protected override void OnInitialized()
+    {
+        _editContext = new EditContext(agentModel);
+        base.OnInitialized();
+    }
+
+    public async Task HandleOnValidSubmit()
+    {
+        var createdAgent = await NetworkHandler.AddAgentAsync(agentModel);
+        await OnSubmitSuccess.InvokeAsync(createdAgent);
+        await OnHideModalClick();
+    }
+}

@@ -1,0 +1,28 @@
+﻿@inherits BaseModal
+
+@inject NetworkHandler NetworkHandler
+
+<Modal @ref="modal" Title="Удаление агента" IsVerticallyCentered="true">
+    <BodyTemplate>
+        <p>Вы уверены, что хотите удалить агента @Host из базы данных?</p>
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Secondary" @onclick="OnHideModalClick">Закрыть</Button>
+        <Button Color="ButtonColor.Primary" @onclick="OnConfirmDeletion">Удалить</Button>
+    </FooterTemplate>
+</Modal>
+
+@code {
+    [Parameter]
+    public string Host { get; set; }
+
+    [Parameter]
+    public EventCallback<string?> OnDeleted { get; set; }
+
+    public async Task OnConfirmDeletion()
+    {
+        var deletedAgent = await NetworkHandler.DeleteAgentAsync(Host);
+        await OnDeleted.InvokeAsync(deletedAgent);
+        await OnHideModalClick();
+    }
+}

@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
-using Newtonsoft.Json;
 using PacketDotNet;
 using System.Net.Http.Json;
 using WebSpectre.Client.EventArgs;
 using WebSpectre.Shared;
 using WebSpectre.Shared.Agents;
+using WebSpectre.Shared.Models;
 using WebSpectre.Shared.Perfomance;
 using ErrorEventArgs = WebSpectre.Client.EventArgs.ErrorEventArgs;
 using StatisticsEventArgs = WebSpectre.Client.EventArgs.StatisticsEventArgs;
@@ -15,16 +15,40 @@ namespace WebSpectre.Client.Services
     {
         private readonly HttpClient _httpClient;
         private readonly HubConnection _hub;
+        private readonly IConfiguration _config;
 
         private Dictionary<string, string?> _hosts;
 
-        public NetworkHandler(HttpClient httpClient, HubConnection hub) 
+        public NetworkHandler(HttpClient httpClient, HubConnection hub, IConfiguration config) 
         {
             _httpClient = httpClient;
             _hub = hub;
+            _config = config;
 
             HubOn();
             _ = GetAgentsAsync();
+        }
+
+        public async Task<AgentModel?> AddAgentAsync(AgentModel agentModel)
+        {
+            var uri = $"{_config.GetApiUrl()}/api.webspectre/agent/add?host={agentModel.Hostname}&url={agentModel.Url}";
+
+            var response = await _httpClient.PostAsync(new Uri(uri), null);
+            if (response.IsSuccessStatusCode)          
+                return agentModel;
+            
+            return null;
+        }
+
+        public async Task<string?> DeleteAgentAsync(string host)
+        {
+            var uri = $"{_config.GetApiUrl()}/api.webspectre/agent/remove?host={host}";
+
+            var response = await _httpClient.DeleteAsync(new Uri(uri));
+            if (response.IsSuccessStatusCode)
+                return host;
+
+            return null;
         }
 
         public async Task<bool> GetHostsInfoAsync()
@@ -133,7 +157,7 @@ namespace WebSpectre.Client.Services
                 await _hub.SendAsync("StopRequired", host);
         }
 
-        private async Task GetAgentsAsync()
+        public async Task GetAgentsAsync()
         {
             if (_hub is not null)
                 await _hub.SendAsync("GetAgents");

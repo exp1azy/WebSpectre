@@ -20,9 +20,12 @@ namespace WebSpectre.Client
             {
                 var httpClient = sp.GetService<HttpClient>();
                 var hubConnection = sp.GetService<HubConnection>();
+                var config = sp.GetService<IConfiguration>();
 
-                return new NetworkHandler(httpClient, hubConnection);
+                return new NetworkHandler(httpClient, hubConnection, config);
             });
+
+            services.AddBlazorBootstrap();
         }
 
         public static string GetApiUrl(this IConfiguration config)

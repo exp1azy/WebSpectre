@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.ResponseCompression;
 using Serilog;
+using WebSpectre.Server.Data;
 using WebSpectre.Server.Hubs;
 using WebSpectre.Server.Startup;
 
@@ -32,7 +33,8 @@ namespace WebSpectre.Server
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.File(builder.Configuration["LogFile"]!)
                 .CreateLogger();
-
+            
+            builder.Services.AddDbContext<DataContext>();
             builder.AddElastic();
             builder.AddRedis();
             builder.AddServices();

@@ -1,5 +1,4 @@
-﻿using WebSpectre.Server.Data;
-using WebSpectre.Server.Repositories.Interfaces;
+﻿using WebSpectre.Server.Repositories.Interfaces;
 using WebSpectre.Server.Repositories;
 using WebSpectre.Server.Services.Interfaces;
 using WebSpectre.Server.Services;
@@ -10,7 +9,6 @@ namespace WebSpectre.Server.Startup
     {
         public static void AddServices(this WebApplicationBuilder builder)
         {
-            builder.Services.AddDbContext<DataContext>();
             builder.Services.AddTransient<IRedisRepository, RedisRepository>();
             builder.Services.AddTransient<IMonitoringService, MonitoringService>();
             builder.Services.AddTransient<IUserRepository, UserRepository>();

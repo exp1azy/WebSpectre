@@ -41,13 +41,20 @@ namespace WebSpectre.Server.Services
         {
             try
             {
-             var agents = new Dictionary<string, string?>();
+                var agents = new Dictionary<string, string?>();
 
-                var keys = GetAgents().Select(a => a.ToString()).ToList();
-                foreach (var key in keys)
+                var agentsFromRedis = GetAgents().Select(a => a.ToString()).ToList();
+                foreach (var agent in agentsFromRedis)
                 {
-                    var url = await _agentService.GetAgentUrlAsync(key);
-                    agents.Add(key, url);
+                    var url = await _agentService.GetAgentUrlAsync(agent);
+                    agents.Add(agent.ToLower(), url.ToLower());
+                }
+
+                var agentsFromDb = await _agentService.GetAllAgentsAsync();
+                foreach (var agent in agentsFromDb)
+                {
+                    if (!agents.ContainsKey(agent.Hostname))
+                        agents.Add(agent.Hostname.ToLower(), agent.Url.ToLower());
                 }
 
                 await _hubContext.Clients.All.SendAsync("ReceiveAgents", agents);

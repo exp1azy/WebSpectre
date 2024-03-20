@@ -16,7 +16,7 @@ namespace WebSpectre.Server.Controllers
         {
             try
             {
-                await _agentService.AddAgentAsync(new AgentModel { Hostname = host, Url = url }, cancellationToken);
+                await _agentService.AddAgentAsync(new AgentModel { Hostname = host.ToLower(), Url = url.ToLower() }, cancellationToken);
                 return Ok();
             }
             catch (EntityAlreadyExistException ex)
@@ -30,7 +30,7 @@ namespace WebSpectre.Server.Controllers
         {
             try
             {
-                await _agentService.RemoveAgentAsync(host);
+                await _agentService.RemoveAgentAsync(host, cancellationToken);
                 return Ok();
             }
             catch (NoSuchAgentException ex)

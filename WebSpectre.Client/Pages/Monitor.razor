@@ -4,8 +4,17 @@
 
 <PageTitle>Мониторинг</PageTitle>
 
+@if (toastMessages.Any())
+{
+    <Toasts class="p-3" Messages="toastMessages" AutoHide="true" Delay="5000" Placement="ToastsPlacement.BottomRight" />
+}
 <div class="ws-add-delete-agent">
-    <button class="ws-add">Добавить агента</button>
+    <Button @onclick="ShowAddAgent" Color="ButtonColor.Success" Size="Size.ExtraLarge" TooltipTitle="Позволяет зарегистрировать нового агента в базе данных"
+    TooltipPlacement="TooltipPlacement.Right" TooltipColor="TooltipColor.Dark">
+        Добавить агента
+    </Button>
+
+    <AddAgent @ref="addAgent" OnSubmitSuccess="OnAgentCreated"></AddAgent>
 </div>
 @if (hosts.Any())
 {
@@ -14,8 +23,6 @@
     {
         <div class="ws-agent">
             <div class="ws-agent-host">
-                <img src="icons/host.png" alt="agent" class="agent-icon">
-                <span class="ws-agent-hostname">@host.Key</span>
                 @{
                     var status = hostsStatus.GetValueOrDefault(host.Key);
                     if (status == null)
@@ -30,35 +37,39 @@
                     {
                         <div class="state orange"></div>
                     }
-                }                 
-            </div>              
-            @{
-                if (hostsStatus.GetValueOrDefault(host.Key) == null)
-                {
-                    <div class="ws-agent-info">
-                        <button class="ws-agent-button-disabled" disabled>Информация</button>
-                        <button class="ws-agent-button-disabled" disabled>Сетевые адаптеры</button>
-                        <button class="ws-agent-delete">Удалить агента</button>
-                    </div>
-                    <div class="ws-agent-state">
-                        <button class="ws-agent-start-disabled" disabled>Запустить</button>
-                    </div>
                 }
-                else
-                {
-                    <div class="ws-agent-info">
-                        <button class="ws-agent-button" @onclick="ShowAbout">Информация</button>
-                        <button class="ws-agent-button">Сетевые адаптеры</button>
-                        <button class="ws-agent-delete">Удалить агента</button>
-                    </div>
-                    <div class="ws-agent-state">
-                        <button class="ws-agent-start">Запустить</button>
-                    </div>
-                }
-            }              
+                <span class="ws-agent-hostname">@host.Key</span>                 
+            </div>                                   
+            <div class="ws-agent-info">
+                <Button @onclick="ShowAbout" Color="ButtonColor.Primary" TooltipTitle="Посмотреть информацию о данной машине"
+                TooltipPlacement="TooltipPlacement.Bottom" TooltipColor="TooltipColor.Dark" Disabled=@(status == null ? true : false)>
+                    Информация
+                </Button>
+
+                <Button @onclick="ShowAvailableDevices" Color="ButtonColor.Primary" TooltipTitle="Посмотреть информацию о сетевых адаптерах данной машины"
+                TooltipPlacement="TooltipPlacement.Bottom" TooltipColor="TooltipColor.Dark" Disabled=@(status == null ? true : false)>
+                    Сетевые адаптеры
+                </Button>
+
+                <Button @onclick="ShowConfirmDeletion" Color="ButtonColor.Danger" TooltipTitle="Позволяет удалить агента из базы данных"
+                TooltipPlacement="TooltipPlacement.Bottom" TooltipColor="TooltipColor.Dark">
+                    Удалить агента
+                </Button>
+
+                <Button Color="ButtonColor.Success" TooltipTitle="Позволяет запустить перехват сетевого трафика на указанной машине"
+                TooltipPlacement="TooltipPlacement.Bottom" TooltipColor="TooltipColor.Dark" Disabled=@(status == null ? true : false)>
+                    Запустить
+                </Button>
+            </div>                                    
         </div>
 
-        <About IsModalOpen="isAboutOpen" Host="@host.Key" Info="host.Value"></About>
+        <ConfirmDeletion @ref="confirmDeletion" Host="@host.Key" OnDeleted="OnAgentDeleted"></ConfirmDeletion>
+
+        if (host.Value != null)
+        {
+            <About @ref="aboutModal" Host="@host.Key" Info="@host.Value"></About>
+            <AvailableDevices @ref="availableDevices" Host="@host.Key" Info="@host.Value"></AvailableDevices>
+        }           
     }
     </div>
 }
@@ -79,11 +90,68 @@ else
     private List<Statistics> statistics = new List<Statistics>();
     private Throughput throughput = new Throughput();
 
-    private bool isAboutOpen = false;
+    private About aboutModal;
+    private async Task ShowAbout() => await aboutModal.OnShowModalClick();
 
-    private void ShowAbout()
+    private AvailableDevices availableDevices;
+    private async Task ShowAvailableDevices() => await availableDevices.OnShowModalClick();
+
+    private List<ToastMessage> toastMessages = new();
+
+    private AddAgent addAgent;
+    private async Task ShowAddAgent() => await addAgent.OnShowModalClick();
+    private async Task OnAgentCreated(AgentModel? agent)
     {
-        isAboutOpen = true;
+        if (agent != null)
+        {
+            toastMessages.Add(new ToastMessage
+            {
+                Message = $"Агент {agent.Hostname} был успешно зарегистрирован",
+                Title = "Информация",
+                HelpText = $"{DateTime.Now}",
+                Type = ToastType.Info
+            });
+        }
+        else {
+            toastMessages.Add(new ToastMessage
+            {
+                Message = $"Не удалось создать агента",
+                Title = "Ошибка",
+                HelpText = $"{DateTime.Now}",
+                Type = ToastType.Warning
+            });
+        }
+
+        await NetworkHandler.GetAgentsAsync();
+        StateHasChanged();
+    }
+
+    private ConfirmDeletion confirmDeletion;
+    private async Task ShowConfirmDeletion() => await confirmDeletion.OnShowModalClick();
+    private async Task OnAgentDeleted(string? host)
+    {
+        if (host != null)
+        {
+            toastMessages.Add(new ToastMessage
+            {
+                Message = $"Выполнено удаление агента {host}",
+                Title = "Информация",
+                HelpText = $"{DateTime.Now}",
+                Type = ToastType.Info
+            });
+        }
+        else
+        {
+            toastMessages.Add(new ToastMessage
+            {
+                Message = $"Не удалось удалить агента",
+                Title = "Ошибка",
+                HelpText = $"{DateTime.Now}",
+                Type = ToastType.Warning
+            });
+        }
+
+        await NetworkHandler.GetAgentsAsync();
         StateHasChanged();
     }
 

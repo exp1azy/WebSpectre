@@ -1,50 +1,36 @@
-﻿@if (IsModalOpen)
-{
-    <div class="modal">
-        <div class="modal-content">
-            <h3>@Host</h3>
-            <p>Имя машины: @Info.MachineName</p>
-            <p>Информация об ОС: @Info.OSVersion</p>
-            <p>Запущен ли захват: @Info.IsCaptureProcessing</p>
-            <p>Материнская плата: @Info.Hardware.MotherboardInfo</p>
-            <p>Процессор: @Info.Hardware.CPUInfo</p>
-            <p>Графический процессор: @Info.Hardware.GPUInfo</p>
-            <p>Количество оперативной памяти: @Info.Hardware.MemoryInfo</p>
-            <p>Адреса:</p>
+﻿@inherits BaseModal
+
+<Modal @ref="modal" Title="Информация об устройстве" IsVerticallyCentered="true" IsScrollable="true">
+    <BodyTemplate>
+        <h3>@Host</h3>
+        <p>Имя машины: @Info.MachineName</p>
+        <p>Информация об ОС: @Info.OSVersion</p>
+        <p>Запущен ли захват: @(Info.IsCaptureProcessing ? "Да" : "Нет")</p>
+        <p>Производитель материской платы: @Info.Hardware.MotherboardInfo.Manufacturer</p>
+        <p>Модель материнской платы: @Info.Hardware.MotherboardInfo.Model</p>
+        <p>Процессор: @Info.Hardware.CPUInfo.Processor</p>
+        <p>Кол-во ядер процессора: @Info.Hardware.CPUInfo.NumberOfCores</p>
+        <p>Тактовая частота процессора: @Info.Hardware.CPUInfo.MaxClockSpeed</p>
+        <p>Графический процессор: @Info.Hardware.GPUInfo.GraphicsCard</p>
+        <p>Количество оперативной памяти: @Info.Hardware.MemoryInfo.TotalMemory</p>
+        <p>Адреса: @(!Info.IPAddresses.Any() ? "Нет информации" : string.Empty)</p>
+        @if (Info.IPAddresses.Any())
+        {
             @foreach (var address in Info.IPAddresses)
             {
-                <p>@address</p>
+                <p style="margin-left: 16px">@address</p>
             }
-            <p>Доступные сетевые адаптеры:</p>
-            @foreach (var device in Info.AvailableDevices)
-            {
-                <p>@device.FriendlyName</p>
-                <p>@device.Description</p>
-                <p>@device.MacAddress</p>
-                <p>Адреса адаптера:</p>
-                foreach (var address in device.Addresses)
-                {
-                    <p>@address</p>
-                }
-                <p>Gateway:</p>
-                foreach (var gateway in device.GatewayAddresses)
-                {
-                    <p>@gateway</p>
-                }
-            }
-            <button @onclick="CloseModal">Закрыть</button>
-        </div>
-    </div>
-}
+        }     
+    </BodyTemplate>
+    <FooterTemplate>
+        <Button Color="ButtonColor.Primary" @onclick="OnHideModalClick">Закрыть</Button>
+    </FooterTemplate>
+</Modal>
 
 @code {
-    [Parameter] public bool IsModalOpen { get; set; }
-    [Parameter] public string Host { get; set; }
-    [Parameter] public HostInfo Info { get; set; }
+    [Parameter] 
+    public string Host { get; set; }
 
-    private void CloseModal()
-    {
-        IsModalOpen = false;
-        StateHasChanged();
-    }
+    [Parameter] 
+    public HostInfo Info { get; set; }
 }
